@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{ArgAction, ColorChoice, Parser};
 use moonraker::UpdateHandler;
+use std::sync::Arc;
 use tracing::Level;
 
 mod moonraker;
@@ -37,10 +38,15 @@ async fn main() -> Result<()> {
     let args = Cli::parse();
     setup_logging(args.verbose)?;
 
-    let (mut handler, future) = UpdateHandler::new(&args.moonraker_url).await?;
-    tokio::spawn(async move { handler.process().await });
+    let (handler, future) = UpdateHandler::new(&args.moonraker_url).await?;
+    let handler = Arc::new(handler);
 
-    // todo!();
+    tokio::spawn({
+        let handler = handler.clone();
+        async move { handler.process().await }
+    });
+
+    // TODO: Tick to update the counters every N seconds
     future.await.unwrap();
     Ok(())
 }

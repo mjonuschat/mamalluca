@@ -9,7 +9,7 @@ use serde_json::json;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, Mutex};
 use url::Url;
 
 #[derive(Error, Debug)]
@@ -61,7 +61,7 @@ impl From<StatusData> for String {
 
 pub struct UpdateHandler {
     initialized: AtomicBool,
-    updates: mpsc::Receiver<MoonrakerStatusNotification>,
+    updates: Mutex<mpsc::Receiver<MoonrakerStatusNotification>>,
     connection: Arc<ezsockets::Client<Client>>,
     url: Url,
     current_status: DashMap<StatusData, serde_json::Value>,
@@ -81,7 +81,7 @@ impl UpdateHandler {
         Ok((
             Self {
                 initialized: AtomicBool::new(false),
-                updates: rx,
+                updates: Mutex::new(rx),
                 connection: Arc::new(handle),
                 url: url.to_owned(),
                 current_status: DashMap::new(),
@@ -90,8 +90,10 @@ impl UpdateHandler {
         ))
     }
 
-    pub async fn process(&mut self) -> Result<(), UpdateHandlerError> {
-        while let Some(notification) = &self.updates.recv().await {
+    pub async fn process(&self) -> Result<(), UpdateHandlerError> {
+        let updates = &mut self.updates.lock().await;
+
+        while let Some(ref notification) = updates.recv().await {
             let result = match notification {
                 MoonrakerStatusNotification::MoonrakerConnected => {
                     self.on_moonraker_connected().await
