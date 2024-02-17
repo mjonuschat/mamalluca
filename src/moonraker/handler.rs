@@ -1,8 +1,7 @@
-use crate::moonraker;
 use crate::moonraker::types::Payload;
 use crate::moonraker::{Client, MoonrakerCommands, MoonrakerStatusNotification};
 
-use crate::types::{klipper, MetricsExporter};
+use crate::types::{klipper, moonraker, MetricsExporter};
 use anyhow::anyhow;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -27,8 +26,9 @@ pub(crate) enum UpdateHandlerError {
     FatalMoonrakerConnectionError,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash, strum::Display)]
 enum StatusData {
+    MoonrakerStatus,
     Mcu(String),
     Webhooks,
 }
@@ -62,6 +62,7 @@ impl From<StatusData> for String {
                 }
             }
             StatusData::Webhooks => String::from("webhooks"),
+            StatusData::MoonrakerStatus => String::from("moonraker"),
         }
     }
 }
@@ -83,7 +84,7 @@ impl UpdateHandler {
         impl std::future::Future<Output = std::result::Result<(), ezsockets::Error>>,
     )> {
         let (tx, rx) = tokio::sync::mpsc::channel(100);
-        let (handle, future) = moonraker::Client::connect(url.as_str(), tx.clone()).await?;
+        let (handle, future) = Client::connect(url.as_str(), tx.clone()).await?;
 
         Ok((
             Self {
@@ -116,6 +117,16 @@ impl UpdateHandler {
                     let data: klipper::WebhooksStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
+                StatusData::MoonrakerStatus => {
+                    tracing::debug!(key = "moonraker", "Processing status update");
+                    let data = data
+                        .pointer("/0")
+                        .ok_or(UpdateHandlerError::MissingStatsField(
+                            "moonraker.status".to_string(),
+                        ))?;
+                    let data: moonraker::MoonrakerStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
             };
             exporter.export(name)
         }
@@ -136,6 +147,12 @@ impl UpdateHandler {
                 MoonrakerStatusNotification::KlipperStatusData(payload) => {
                     self.process_status_update(payload).await
                 }
+                MoonrakerStatusNotification::MoonrakerStatusData(payload) => {
+                    self.current_status
+                        .insert(StatusData::MoonrakerStatus, payload.to_owned());
+                    Ok(())
+                }
+
                 n => {
                     tracing::info!(
                         "Implementation required for notification {}, {:#?}",
