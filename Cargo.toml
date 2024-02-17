@@ -23,3 +23,6 @@ dashmap = { version = "5.5.3", features = ["serde"] }
 strum = { version = "0.26.1", features = ["derive"] }
 serde_json_path = "0.6.5"
 json-patch = "1.2.0"
+metrics = "0.22.1"
+metrics-exporter-prometheus = "0.13.1"
+metrics-util = "0.16.2"

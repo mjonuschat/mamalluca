@@ -2,6 +2,7 @@ use crate::moonraker;
 use crate::moonraker::types::Payload;
 use crate::moonraker::{Client, MoonrakerCommands, MoonrakerStatusNotification};
 
+use crate::types::{klipper, MetricsExporter};
 use anyhow::anyhow;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -13,14 +14,20 @@ use tokio::sync::{mpsc, oneshot, Mutex};
 use url::Url;
 
 #[derive(Error, Debug)]
-pub enum UpdateHandlerError {
+pub(crate) enum UpdateHandlerError {
     #[error("Websocket update notification channel disconnected")]
     ChannelDisconnected,
     #[error("Update notification for `{0}` is not supported")]
     UnknownStatusUpdate(String),
+    #[error("Error deserializing stats data")]
+    DeserializationError(#[from] serde_json::Error),
+    #[error("Require field not found")]
+    MissingStatsField(String),
+    #[error("Fatal Moonraker connection error")]
+    FatalMoonrakerConnectionError,
 }
 
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash)]
 enum StatusData {
     Mcu(String),
     Webhooks,
@@ -88,6 +95,31 @@ impl UpdateHandler {
             },
             future,
         ))
+    }
+
+    pub async fn export(&self) -> Result<(), UpdateHandlerError> {
+        let current_status = self.current_status.clone().into_read_only();
+        for (data_type, data) in current_status.iter() {
+            let mut name = None;
+            let exporter: Box<dyn MetricsExporter> = match data_type {
+                StatusData::Mcu(identifier) => {
+                    name.replace(identifier);
+                    let data = data.pointer("/last_stats").ok_or(
+                        UpdateHandlerError::MissingStatsField(format!(
+                            "mcu.{identifier}.last_stats"
+                        )),
+                    )?;
+                    let data: klipper::McuStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::Webhooks => {
+                    let data: klipper::WebhooksStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+            };
+            exporter.export(name)
+        }
+        Ok(())
     }
 
     pub async fn process(&self) -> Result<(), UpdateHandlerError> {
