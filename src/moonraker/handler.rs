@@ -35,6 +35,7 @@ enum StatusData {
     FanGeneric(String),
     FilamentMotionSensor(String),
     FilamentSwitchSensor(String),
+    GCodeMove,
     HeaterBed(String),
     HeaterFan(String),
     Mcu(String),
@@ -100,6 +101,7 @@ impl TryFrom<&str> for StatusData {
             ("motion_report", _) => Ok(StatusData::MotionReport),
             ("exclude_object", _) => Ok(StatusData::ExcludeObject),
             ("toolhead", _) => Ok(StatusData::Toolhead),
+            ("gcode_move", _) => Ok(StatusData::GCodeMove),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -176,6 +178,7 @@ impl From<StatusData> for String {
             StatusData::MotionReport => String::from("motion_report"),
             StatusData::ExcludeObject => String::from("exclude_object"),
             StatusData::Toolhead => String::from("toolhead"),
+            StatusData::GCodeMove => String::from("gcode_move"),
         }
     }
 }
@@ -320,6 +323,10 @@ impl UpdateHandler {
                 }
                 StatusData::Toolhead => {
                     let data: klipper::ToolheadStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::GCodeMove => {
+                    let data: klipper::GCodeMoveStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

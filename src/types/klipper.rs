@@ -353,3 +353,18 @@ impl MetricsExporter for ToolheadStats {
         gauge!("klipper.stats.toolhead.stalls").set(self.stalls as f64);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct GCodeMoveStats {
+    extrude_factor: f64,
+    speed_factor: f64,
+    speed: f64,
+}
+
+impl MetricsExporter for GCodeMoveStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.gcode.speed_factor").set(self.speed_factor);
+        gauge!("klipper.stats.gcode.extrude_factor").set(self.extrude_factor);
+        gauge!("klipper.stats.gcode.speed").set(self.speed);
+    }
+}
