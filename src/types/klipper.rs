@@ -124,3 +124,23 @@ impl MetricsExporter for ExtruderStats {
         gauge!("klipper.stats.extruder.time_offset", &labels).set(self.time_offset);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct HeaterBedStats {
+    power: f64,
+    target: f64,
+    temperature: f64,
+}
+
+impl MetricsExporter for HeaterBedStats {
+    fn export(&self, name: Option<&String>) {
+        let mut labels = Vec::new();
+        if let Some(name) = name {
+            labels.push(("name", name.to_owned()));
+        }
+
+        gauge!("klipper.stats.heater_bed.power", &labels).set(self.power);
+        gauge!("klipper.stats.heater_bed.target", &labels).set(self.target);
+        gauge!("klipper.stats.heater_bed.temperature", &labels).set(self.temperature);
+    }
+}

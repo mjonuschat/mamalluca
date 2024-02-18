@@ -29,6 +29,7 @@ pub(crate) enum UpdateHandlerError {
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash)]
 enum StatusData {
     Extruder(String),
+    HeaterBed(String),
     Mcu(String),
     MoonrakerStatus,
     Webhooks,
@@ -49,6 +50,8 @@ impl TryFrom<&str> for StatusData {
             ("webhooks", _) => Ok(StatusData::Webhooks),
             ("extruder", Some(name)) => Ok(StatusData::Extruder(name.to_owned())),
             ("extruder", None) => Ok(StatusData::Extruder("extruder".to_owned())),
+            ("heater_bed", Some(name)) => Ok(StatusData::HeaterBed(name.to_owned())),
+            ("heater_bed", None) => Ok(StatusData::HeaterBed("heater_bed".to_owned())),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -71,6 +74,13 @@ impl From<StatusData> for String {
                     String::from("extruder")
                 } else {
                     format!("extruderÏ {name}")
+                }
+            }
+            StatusData::HeaterBed(name) => {
+                if name == "heater_bed" {
+                    String::from("heater_bed")
+                } else {
+                    format!("heater_bed {name}")
                 }
             }
         }
@@ -140,6 +150,11 @@ impl UpdateHandler {
                 StatusData::Extruder(identifier) => {
                     name.replace(identifier);
                     let data: klipper::ExtruderStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::HeaterBed(identifier) => {
+                    name.replace(identifier);
+                    let data: klipper::HeaterBedStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };
