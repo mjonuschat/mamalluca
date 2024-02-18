@@ -50,6 +50,7 @@ enum StatusData {
     TMC2240(String),
     TMC2660(String),
     TMC5160(String),
+    Toolhead,
     Webhooks,
     ZThermalAdjust,
     ZTilt,
@@ -98,6 +99,7 @@ impl TryFrom<&str> for StatusData {
             ("z_tilt", _) => Ok(StatusData::ZTilt),
             ("motion_report", _) => Ok(StatusData::MotionReport),
             ("exclude_object", _) => Ok(StatusData::ExcludeObject),
+            ("toolhead", _) => Ok(StatusData::Toolhead),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -173,6 +175,7 @@ impl From<StatusData> for String {
             StatusData::ZTilt => String::from("z_tilt"),
             StatusData::MotionReport => String::from("motion_report"),
             StatusData::ExcludeObject => String::from("exclude_object"),
+            StatusData::Toolhead => String::from("toolhead"),
         }
     }
 }
@@ -313,6 +316,10 @@ impl UpdateHandler {
                 StatusData::ExcludeObject => {
                     let data: klipper::ExcludeObjectStats =
                         serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::Toolhead => {
+                    let data: klipper::ToolheadStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

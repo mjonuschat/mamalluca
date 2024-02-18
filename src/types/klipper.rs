@@ -330,3 +330,26 @@ impl MetricsExporter for ExcludeObjectStats {
         gauge!("klipper.stats.exclude_objects.objects").set(self.objects.len() as f64);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct ToolheadStats {
+    max_accel: f64,
+    max_accel_to_decel: f64,
+    max_velocity: f64,
+    square_corner_velocity: f64,
+    print_time: f64,
+    estimated_print_time: f64,
+    stalls: u64,
+}
+
+impl MetricsExporter for ToolheadStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.toolhead.print_time").set(self.print_time);
+        gauge!("klipper.stats.toolhead.estimated_print_time").set(self.estimated_print_time);
+        gauge!("klipper.stats.toolhead.max_accel").set(self.max_accel);
+        gauge!("klipper.stats.toolhead.max_velocity").set(self.max_velocity);
+        gauge!("klipper.stats.toolhead.square_corner_velocity").set(self.square_corner_velocity);
+        gauge!("klipper.stats.toolhead.max_accel_to_decel").set(self.max_accel_to_decel);
+        gauge!("klipper.stats.toolhead.stalls").set(self.stalls as f64);
+    }
+}
