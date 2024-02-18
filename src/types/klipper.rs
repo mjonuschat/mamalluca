@@ -166,13 +166,13 @@ impl MetricsExporter for TemperatureSensorStats {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub(crate) struct ControllerFanStats {
+pub(crate) struct GenericFanStats {
     speed: f64,
     #[serde(default)]
     rpm: u64,
 }
 
-impl MetricsExporter for ControllerFanStats {
+impl MetricsExporter for GenericFanStats {
     fn export(&self, name: Option<&String>) {
         let mut labels = Vec::new();
         if let Some(name) = name {
