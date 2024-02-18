@@ -12,7 +12,6 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::mpsc;
 use tokio::sync::oneshot::Sender;
 use url::Url;
-
 type ConnectionID = u64;
 #[derive(Debug)]
 pub(crate) enum MoonrakerCommands {

@@ -20,16 +20,17 @@ pub(crate) enum UpdateHandlerError {
     UnknownStatusUpdate(String),
     #[error("Error deserializing stats data")]
     DeserializationError(#[from] serde_json::Error),
-    #[error("Require field not found")]
+    #[error("Required field not found: `{0}`")]
     MissingStatsField(String),
     #[error("Fatal Moonraker connection error")]
     FatalMoonrakerConnectionError,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash, strum::Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash)]
 enum StatusData {
-    MoonrakerStatus,
+    Extruder(String),
     Mcu(String),
+    MoonrakerStatus,
     Webhooks,
 }
 
@@ -46,6 +47,8 @@ impl TryFrom<&str> for StatusData {
             ("mcu", None) => Ok(StatusData::Mcu("mcu".to_string())),
             ("mcu", Some(name)) => Ok(StatusData::Mcu(name.to_owned())),
             ("webhooks", _) => Ok(StatusData::Webhooks),
+            ("extruder", Some(name)) => Ok(StatusData::Extruder(name.to_owned())),
+            ("extruder", None) => Ok(StatusData::Extruder("extruder".to_owned())),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -63,6 +66,13 @@ impl From<StatusData> for String {
             }
             StatusData::Webhooks => String::from("webhooks"),
             StatusData::MoonrakerStatus => String::from("moonraker"),
+            StatusData::Extruder(name) => {
+                if name == "extruder" {
+                    String::from("extruder")
+                } else {
+                    format!("extruderÏ {name}")
+                }
+            }
         }
     }
 }
@@ -125,6 +135,11 @@ impl UpdateHandler {
                             "moonraker.status".to_string(),
                         ))?;
                     let data: moonraker::MoonrakerStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::Extruder(identifier) => {
+                    name.replace(identifier);
+                    let data: klipper::ExtruderStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

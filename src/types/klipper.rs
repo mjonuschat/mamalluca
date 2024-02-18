@@ -1,6 +1,7 @@
 use crate::types::MetricsExporter;
 use metrics::{counter, describe_counter, gauge, Unit};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -83,8 +84,43 @@ pub(crate) struct WebhooksStats {
     state_message: String,
 }
 
-impl MetricsExporter for WebhooksStats {
-    fn export(&self, _name: Option<&String>) {
-        // Nothing to export
+impl MetricsExporter for WebhooksStats {}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct HeaterInformation {
+    available_heaters: HashSet<String>,
+    available_sensors: HashSet<String>,
+    available_monitors: HashSet<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct ExtruderStats {
+    can_extrude: bool,
+    power: f64,
+    pressure_advance: f64,
+    smooth_time: f64,
+    target: f64,
+    temperature: f64,
+    time_offset: f64,
+}
+
+impl MetricsExporter for ExtruderStats {
+    fn describe(&self) {
+        describe_counter!("klipper.stats.extruder.smooth_time", Unit::Seconds, "");
+    }
+
+    fn export(&self, name: Option<&String>) {
+        let mut labels = Vec::new();
+        if let Some(name) = name {
+            labels.push(("name", name.to_owned()));
+        }
+
+        gauge!("klipper.stats.extruder.can_extrude", &labels).set(self.can_extrude as u8 as f64);
+        gauge!("klipper.stats.extruder.power", &labels).set(self.power);
+        gauge!("klipper.stats.extruder.pressure_advance", &labels).set(self.pressure_advance);
+        gauge!("klipper.stats.extruder.smooth_tmime", &labels).set(self.smooth_time);
+        gauge!("klipper.stats.extruder.target", &labels).set(self.target);
+        gauge!("klipper.stats.extruder.temperature", &labels).set(self.temperature);
+        gauge!("klipper.stats.extruder.time_offset", &labels).set(self.time_offset);
     }
 }
