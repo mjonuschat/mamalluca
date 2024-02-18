@@ -29,6 +29,7 @@ pub(crate) enum UpdateHandlerError {
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash)]
 enum StatusData {
     ControllerFan(String),
+    ExcludeObject,
     Extruder(String),
     Fan(String),
     FanGeneric(String),
@@ -96,6 +97,7 @@ impl TryFrom<&str> for StatusData {
             ("probe", _) => Ok(StatusData::Probe),
             ("z_tilt", _) => Ok(StatusData::ZTilt),
             ("motion_report", _) => Ok(StatusData::MotionReport),
+            ("exclude_object", _) => Ok(StatusData::ExcludeObject),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -170,6 +172,7 @@ impl From<StatusData> for String {
             StatusData::Probe => String::from("probe"),
             StatusData::ZTilt => String::from("z_tilt"),
             StatusData::MotionReport => String::from("motion_report"),
+            StatusData::ExcludeObject => String::from("exclude_object"),
         }
     }
 }
@@ -305,6 +308,11 @@ impl UpdateHandler {
                 }
                 StatusData::MotionReport => {
                     let data: klipper::MotionReportStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::ExcludeObject => {
+                    let data: klipper::ExcludeObjectStats =
+                        serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

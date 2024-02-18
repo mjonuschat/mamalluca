@@ -317,3 +317,16 @@ impl MetricsExporter for MotionReportStats {
         gauge!("klipper.stats.motion.velocity").set(self.live_velocity);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct ExcludeObjectStats {
+    excluded_objects: Vec<serde_json::Value>,
+    objects: Vec<serde_json::Value>,
+}
+
+impl MetricsExporter for ExcludeObjectStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.exclude_objects.excluded").set(self.excluded_objects.len() as f64);
+        gauge!("klipper.stats.exclude_objects.objects").set(self.objects.len() as f64);
+    }
+}
