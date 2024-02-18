@@ -185,7 +185,7 @@ impl MetricsExporter for ControllerFanStats {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub(crate) struct TMC2240 {
+pub(crate) struct TMCStepperMotorDriver {
     hold_current: f64,
     mcu_phase_offset: u64,
     phase_offset_position: f64,
@@ -193,7 +193,7 @@ pub(crate) struct TMC2240 {
     temperature: Option<f64>,
 }
 
-impl MetricsExporter for TMC2240 {
+impl MetricsExporter for TMCStepperMotorDriver {
     fn export(&self, name: Option<&String>) {
         let mut labels = Vec::new();
         if let Some(name) = name {

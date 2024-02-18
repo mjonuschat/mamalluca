@@ -34,7 +34,12 @@ enum StatusData {
     Mcu(String),
     MoonrakerStatus,
     TemperatureSensor(String),
+    TMC2130(String),
+    TMC2208(String),
+    TMC2209(String),
     TMC2240(String),
+    TMC2660(String),
+    TMC5160(String),
     Webhooks,
 }
 
@@ -59,7 +64,12 @@ impl TryFrom<&str> for StatusData {
                 Ok(StatusData::TemperatureSensor(name.to_owned()))
             }
             ("controller_fan", Some(name)) => Ok(StatusData::ControllerFan(name.to_owned())),
+            ("tmc2130", Some(name)) => Ok(StatusData::TMC2130(name.to_owned())),
+            ("tmc2208", Some(name)) => Ok(StatusData::TMC2208(name.to_owned())),
+            ("tmc2209", Some(name)) => Ok(StatusData::TMC2209(name.to_owned())),
             ("tmc2240", Some(name)) => Ok(StatusData::TMC2240(name.to_owned())),
+            ("tmc2660", Some(name)) => Ok(StatusData::TMC2660(name.to_owned())),
+            ("tmc5160", Some(name)) => Ok(StatusData::TMC5160(name.to_owned())),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -97,8 +107,23 @@ impl From<StatusData> for String {
             StatusData::ControllerFan(name) => {
                 format!("controller_fan {name}")
             }
+            StatusData::TMC2130(name) => {
+                format!("tmc2130 {name}")
+            }
+            StatusData::TMC2208(name) => {
+                format!("tmc2208 {name}")
+            }
+            StatusData::TMC2209(name) => {
+                format!("tmc2209 {name}")
+            }
             StatusData::TMC2240(name) => {
                 format!("tmc2240 {name}")
+            }
+            StatusData::TMC2660(name) => {
+                format!("tmc2660 {name}")
+            }
+            StatusData::TMC5160(name) => {
+                format!("tmc5160 {name}")
             }
         }
     }
@@ -186,9 +211,15 @@ impl UpdateHandler {
                         serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
-                StatusData::TMC2240(identifier) => {
+                StatusData::TMC2130(identifier)
+                | StatusData::TMC2208(identifier)
+                | StatusData::TMC2209(identifier)
+                | StatusData::TMC2240(identifier)
+                | StatusData::TMC2660(identifier)
+                | StatusData::TMC5160(identifier) => {
                     name.replace(identifier);
-                    let data: klipper::TMC2240 = serde_json::from_value(data.to_owned())?;
+                    let data: klipper::TMCStepperMotorDriver =
+                        serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };
