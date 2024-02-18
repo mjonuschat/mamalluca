@@ -179,8 +179,8 @@ impl MetricsExporter for GenericFanStats {
             labels.push(("name", name.to_owned()));
         }
 
-        gauge!("klipper.stats.controller_fan.speed", &labels).set(self.speed);
-        gauge!("klipper.stats.controller_fan.rpm", &labels).set(self.rpm as f64);
+        gauge!("klipper.stats.fan.speed", &labels).set(self.speed);
+        gauge!("klipper.stats.fan.rpm", &labels).set(self.rpm as f64);
     }
 }
 
