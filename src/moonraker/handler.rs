@@ -192,6 +192,7 @@ impl From<StatusData> for String {
     }
 }
 
+#[derive(Debug)]
 pub struct UpdateHandler {
     initialized: AtomicBool,
     updates: Mutex<mpsc::Receiver<MoonrakerStatusNotification>>,

@@ -30,11 +30,13 @@ pub(crate) enum MoonrakerStatusNotification {
     MoonrakerStatusData(Payload),
 }
 
+#[derive(Debug)]
 struct MoonrakerClientState {
     requests: DashMap<ConnectionID, Sender<serde_json::Value>>,
     next_id: AtomicU64,
 }
 
+#[derive(Debug)]
 pub(crate) struct Client {
     handle: ezsockets::Client<Self>,
     updates: mpsc::Sender<MoonrakerStatusNotification>,
