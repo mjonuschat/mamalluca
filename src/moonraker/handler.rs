@@ -45,6 +45,7 @@ enum StatusData {
     TMC2660(String),
     TMC5160(String),
     Webhooks,
+    ZThermalAdjust,
 }
 
 impl TryFrom<&str> for StatusData {
@@ -78,6 +79,7 @@ impl TryFrom<&str> for StatusData {
             ("fan", _) => Ok(StatusData::Fan(String::from("fan"))),
             ("fan_generic", Some(name)) => Ok(StatusData::FanGeneric(name.to_owned())),
             ("heater_fan", Some(name)) => Ok(StatusData::HeaterFan(name.to_owned())),
+            ("z_thermal_adjust", _) => Ok(StatusData::ZThermalAdjust),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -141,6 +143,7 @@ impl From<StatusData> for String {
             StatusData::HeaterFan(name) => {
                 format!("heater_fan {name}")
             }
+            StatusData::ZThermalAdjust => String::from("z_thermal_adjust"),
         }
     }
 }
@@ -247,6 +250,11 @@ impl UpdateHandler {
                 | StatusData::HeaterFan(identifier) => {
                     name.replace(identifier);
                     let data: klipper::GenericFanStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::ZThermalAdjust => {
+                    let data: klipper::ZThermalAdjustStats =
+                        serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

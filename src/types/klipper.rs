@@ -221,3 +221,27 @@ impl MetricsExporter for StepperEnableStats {
         }
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct ZThermalAdjustStats {
+    current_z_adjust: f64,
+    enabled: bool,
+    measured_max_temp: f64,
+    measured_min_temp: f64,
+    temperature: f64,
+    z_adjust_ref_temperature: f64,
+}
+
+impl MetricsExporter for ZThermalAdjustStats {
+    fn export(&self, _name: Option<&String>) {
+        let labels = vec![("name", "z_adjust")];
+
+        gauge!("klipper.stats.temperature.current", &labels).set(self.temperature);
+        gauge!("klipper.stats.temperature.min", &labels).set(self.measured_min_temp);
+        gauge!("klipper.stats.temperature.max", &labels).set(self.measured_max_temp);
+
+        gauge!("klipper.stats.z_adjust.reference_temperature", &labels)
+            .set(self.z_adjust_ref_temperature);
+        gauge!("klipper.stats.z_adjust.current_z_adjustment", &labels).set(self.current_z_adjust);
+    }
+}
