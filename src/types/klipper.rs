@@ -304,3 +304,16 @@ impl MetricsExporter for ZTiltStats {
         gauge!("klipper.stats.z_tilt.applied").set(self.applied as u64 as f64);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct MotionReportStats {
+    live_extruder_velocity: f64,
+    live_velocity: f64,
+}
+
+impl MetricsExporter for MotionReportStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.motion.extruder_velocity").set(self.live_extruder_velocity);
+        gauge!("klipper.stats.motion.velocity").set(self.live_velocity);
+    }
+}

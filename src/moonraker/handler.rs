@@ -38,6 +38,7 @@ enum StatusData {
     HeaterFan(String),
     Mcu(String),
     MoonrakerStatus,
+    MotionReport,
     PauseResume,
     Probe,
     StepperEnable,
@@ -94,6 +95,7 @@ impl TryFrom<&str> for StatusData {
             ("pause_resume", _) => Ok(StatusData::PauseResume),
             ("probe", _) => Ok(StatusData::Probe),
             ("z_tilt", _) => Ok(StatusData::ZTilt),
+            ("motion_report", _) => Ok(StatusData::MotionReport),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -167,6 +169,7 @@ impl From<StatusData> for String {
             StatusData::PauseResume => String::from("pause_resume"),
             StatusData::Probe => String::from("probe"),
             StatusData::ZTilt => String::from("z_tilt"),
+            StatusData::MotionReport => String::from("motion_report"),
         }
     }
 }
@@ -298,6 +301,10 @@ impl UpdateHandler {
                 }
                 StatusData::ZTilt => {
                     let data: klipper::ZTiltStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::MotionReport => {
+                    let data: klipper::MotionReportStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };
