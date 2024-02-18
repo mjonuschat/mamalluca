@@ -33,6 +33,7 @@ enum StatusData {
     HeaterBed(String),
     Mcu(String),
     MoonrakerStatus,
+    StepperEnable,
     TemperatureSensor(String),
     TMC2130(String),
     TMC2208(String),
@@ -70,6 +71,7 @@ impl TryFrom<&str> for StatusData {
             ("tmc2240", Some(name)) => Ok(StatusData::TMC2240(name.to_owned())),
             ("tmc2660", Some(name)) => Ok(StatusData::TMC2660(name.to_owned())),
             ("tmc5160", Some(name)) => Ok(StatusData::TMC5160(name.to_owned())),
+            ("stepper_enable", _) => Ok(StatusData::StepperEnable),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -125,6 +127,7 @@ impl From<StatusData> for String {
             StatusData::TMC5160(name) => {
                 format!("tmc5160 {name}")
             }
+            StatusData::StepperEnable => String::from("stepper_enable"),
         }
     }
 }
@@ -219,6 +222,11 @@ impl UpdateHandler {
                 | StatusData::TMC5160(identifier) => {
                     name.replace(identifier);
                     let data: klipper::TMCStepperMotorDriver =
+                        serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::StepperEnable => {
+                    let data: klipper::StepperEnableStats =
                         serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }

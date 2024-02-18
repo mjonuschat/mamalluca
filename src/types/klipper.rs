@@ -1,7 +1,7 @@
 use crate::types::MetricsExporter;
 use metrics::{counter, describe_counter, gauge, Unit};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -205,6 +205,19 @@ impl MetricsExporter for TMCStepperMotorDriver {
 
         if let Some(temperature) = self.temperature {
             gauge!("klipper.stats.temperature.current", &labels).set(temperature);
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct StepperEnableStats {
+    steppers: HashMap<String, bool>,
+}
+impl MetricsExporter for StepperEnableStats {
+    fn export(&self, _name: Option<&String>) {
+        for (stepper, enabled) in &self.steppers {
+            let labels = vec![("name", stepper.to_owned())];
+            gauge!("klipper.stats.stepper_driver.enabled", &labels).set(*enabled as u64 as f64);
         }
     }
 }
