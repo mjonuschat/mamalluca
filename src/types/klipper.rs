@@ -278,3 +278,18 @@ impl MetricsExporter for PauseResumeStats {
         gauge!("klipper.stats.pause_resume.paused").set(self.is_paused as u64 as f64);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct ProbeStats {
+    name: String,
+    last_query: bool,
+    last_z_result: f64,
+}
+
+impl MetricsExporter for ProbeStats {
+    fn export(&self, _name: Option<&String>) {
+        let labels = vec![("name", self.name.to_owned())];
+
+        gauge!("klipper.stats.probe.last_z_result", &labels).set(self.last_z_result);
+    }
+}
