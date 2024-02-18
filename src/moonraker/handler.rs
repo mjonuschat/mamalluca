@@ -34,6 +34,7 @@ enum StatusData {
     Mcu(String),
     MoonrakerStatus,
     TemperatureSensor(String),
+    TMC2240(String),
     Webhooks,
 }
 
@@ -58,6 +59,7 @@ impl TryFrom<&str> for StatusData {
                 Ok(StatusData::TemperatureSensor(name.to_owned()))
             }
             ("controller_fan", Some(name)) => Ok(StatusData::ControllerFan(name.to_owned())),
+            ("tmc2240", Some(name)) => Ok(StatusData::TMC2240(name.to_owned())),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -94,6 +96,9 @@ impl From<StatusData> for String {
             }
             StatusData::ControllerFan(name) => {
                 format!("controller_fan {name}")
+            }
+            StatusData::TMC2240(name) => {
+                format!("tmc2240 {name}")
             }
         }
     }
@@ -179,6 +184,11 @@ impl UpdateHandler {
                     name.replace(identifier);
                     let data: klipper::ControllerFanStats =
                         serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::TMC2240(identifier) => {
+                    name.replace(identifier);
+                    let data: klipper::TMC2240 = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

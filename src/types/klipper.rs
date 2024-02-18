@@ -183,3 +183,28 @@ impl MetricsExporter for ControllerFanStats {
         gauge!("klipper.stats.controller_fan.rpm", &labels).set(self.rpm as f64);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct TMC2240 {
+    hold_current: f64,
+    mcu_phase_offset: u64,
+    phase_offset_position: f64,
+    run_current: f64,
+    temperature: Option<f64>,
+}
+
+impl MetricsExporter for TMC2240 {
+    fn export(&self, name: Option<&String>) {
+        let mut labels = Vec::new();
+        if let Some(name) = name {
+            labels.push(("name", name.to_owned()));
+        }
+
+        gauge!("klipper.stats.stepper_driver.hold_current", &labels).set(self.hold_current);
+        gauge!("klipper.stats.stepper_driver.run_current", &labels).set(self.run_current);
+
+        if let Some(temperature) = self.temperature {
+            gauge!("klipper.stats.temperature.current", &labels).set(temperature);
+        }
+    }
+}
