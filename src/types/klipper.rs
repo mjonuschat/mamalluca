@@ -293,3 +293,14 @@ impl MetricsExporter for ProbeStats {
         gauge!("klipper.stats.probe.last_z_result", &labels).set(self.last_z_result);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct ZTiltStats {
+    applied: bool,
+}
+
+impl MetricsExporter for ZTiltStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.z_tilt.applied").set(self.applied as u64 as f64);
+    }
+}

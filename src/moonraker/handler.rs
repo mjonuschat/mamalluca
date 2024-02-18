@@ -50,6 +50,7 @@ enum StatusData {
     TMC5160(String),
     Webhooks,
     ZThermalAdjust,
+    ZTilt,
 }
 
 impl TryFrom<&str> for StatusData {
@@ -92,6 +93,7 @@ impl TryFrom<&str> for StatusData {
             }
             ("pause_resume", _) => Ok(StatusData::PauseResume),
             ("probe", _) => Ok(StatusData::Probe),
+            ("z_tilt", _) => Ok(StatusData::ZTilt),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -164,6 +166,7 @@ impl From<StatusData> for String {
             }
             StatusData::PauseResume => String::from("pause_resume"),
             StatusData::Probe => String::from("probe"),
+            StatusData::ZTilt => String::from("z_tilt"),
         }
     }
 }
@@ -291,6 +294,10 @@ impl UpdateHandler {
                 }
                 StatusData::Probe => {
                     let data: klipper::ProbeStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::ZTilt => {
+                    let data: klipper::ZTiltStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };
