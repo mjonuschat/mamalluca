@@ -53,6 +53,7 @@ enum StatusData {
     TMC2660(String),
     TMC5160(String),
     Toolhead,
+    VirtualSdCard,
     Webhooks,
     ZThermalAdjust,
     ZTilt,
@@ -104,6 +105,7 @@ impl TryFrom<&str> for StatusData {
             ("toolhead", _) => Ok(StatusData::Toolhead),
             ("gcode_move", _) => Ok(StatusData::GCodeMove),
             ("print_stats", _) => Ok(StatusData::PrintStats),
+            ("virtual_sdcard", _) => Ok(StatusData::VirtualSdCard),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -182,6 +184,7 @@ impl From<StatusData> for String {
             StatusData::Toolhead => String::from("toolhead"),
             StatusData::GCodeMove => String::from("gcode_move"),
             StatusData::PrintStats => String::from("print_stats"),
+            StatusData::VirtualSdCard => String::from("virtual_sdcard"),
         }
     }
 }
@@ -334,6 +337,10 @@ impl UpdateHandler {
                 }
                 StatusData::PrintStats => {
                     let data: klipper::PrintStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::VirtualSdCard => {
+                    let data: klipper::VirtualSdCardStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

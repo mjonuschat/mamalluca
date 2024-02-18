@@ -383,3 +383,20 @@ impl MetricsExporter for PrintStats {
         gauge!("klipper.stats.print_stats.total_duration").set(self.total_duration);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct VirtualSdCardStats {
+    file_size: u64,
+    file_position: u64,
+    progress: f64,
+    is_active: bool,
+}
+
+impl MetricsExporter for VirtualSdCardStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.virtual_sdcard.file_size").set(self.file_size as f64);
+        gauge!("klipper.stats.virtual_sdcard.file_position").set(self.file_position as f64);
+        gauge!("klipper.stats.virtual_sdcard.progress").set(self.progress);
+        gauge!("klipper.stats.virtual_sdcard.is_active").set(self.is_active as u64 as f64);
+    }
+}
