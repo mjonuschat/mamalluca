@@ -32,6 +32,7 @@ enum StatusData {
     HeaterBed(String),
     Mcu(String),
     MoonrakerStatus,
+    TemperatureSensor(String),
     Webhooks,
 }
 
@@ -52,6 +53,9 @@ impl TryFrom<&str> for StatusData {
             ("extruder", None) => Ok(StatusData::Extruder("extruder".to_owned())),
             ("heater_bed", Some(name)) => Ok(StatusData::HeaterBed(name.to_owned())),
             ("heater_bed", None) => Ok(StatusData::HeaterBed("heater_bed".to_owned())),
+            ("temperature_sensor", Some(name)) => {
+                Ok(StatusData::TemperatureSensor(name.to_owned()))
+            }
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -82,6 +86,9 @@ impl From<StatusData> for String {
                 } else {
                     format!("heater_bed {name}")
                 }
+            }
+            StatusData::TemperatureSensor(name) => {
+                format!("temperature_sensor {name}")
             }
         }
     }
@@ -155,6 +162,12 @@ impl UpdateHandler {
                 StatusData::HeaterBed(identifier) => {
                     name.replace(identifier);
                     let data: klipper::HeaterBedStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::TemperatureSensor(identifier) => {
+                    name.replace(identifier);
+                    let data: klipper::TemperatureSensorStats =
+                        serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

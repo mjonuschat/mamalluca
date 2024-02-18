@@ -144,3 +144,23 @@ impl MetricsExporter for HeaterBedStats {
         gauge!("klipper.stats.heater_bed.temperature", &labels).set(self.temperature);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct TemperatureSensorStats {
+    temperature: f64,
+    measured_min_temp: f64,
+    measured_max_temp: f64,
+}
+
+impl MetricsExporter for TemperatureSensorStats {
+    fn export(&self, name: Option<&String>) {
+        let mut labels = Vec::new();
+        if let Some(name) = name {
+            labels.push(("name", name.to_owned()));
+        }
+
+        gauge!("klipper.stats.temperature.current", &labels).set(self.temperature);
+        gauge!("klipper.stats.temperature.min", &labels).set(self.measured_min_temp);
+        gauge!("klipper.stats.temperature.max", &labels).set(self.measured_max_temp);
+    }
+}
