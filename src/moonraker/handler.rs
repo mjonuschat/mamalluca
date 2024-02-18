@@ -32,6 +32,8 @@ enum StatusData {
     Extruder(String),
     Fan(String),
     FanGeneric(String),
+    FilamentMotionSensor(String),
+    FilamentSwitchSensor(String),
     HeaterBed(String),
     HeaterFan(String),
     Mcu(String),
@@ -80,6 +82,12 @@ impl TryFrom<&str> for StatusData {
             ("fan_generic", Some(name)) => Ok(StatusData::FanGeneric(name.to_owned())),
             ("heater_fan", Some(name)) => Ok(StatusData::HeaterFan(name.to_owned())),
             ("z_thermal_adjust", _) => Ok(StatusData::ZThermalAdjust),
+            ("filament_motion_sensor", Some(name)) => {
+                Ok(StatusData::FilamentMotionSensor(name.to_owned()))
+            }
+            ("filament_switch_sensor", Some(name)) => {
+                Ok(StatusData::FilamentSwitchSensor(name.to_owned()))
+            }
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -144,6 +152,12 @@ impl From<StatusData> for String {
                 format!("heater_fan {name}")
             }
             StatusData::ZThermalAdjust => String::from("z_thermal_adjust"),
+            StatusData::FilamentSwitchSensor(name) => {
+                format!("filament_switch_sensor {name}")
+            }
+            StatusData::FilamentMotionSensor(name) => {
+                format!("filament_motion_sensor {name}")
+            }
         }
     }
 }
@@ -254,6 +268,14 @@ impl UpdateHandler {
                 }
                 StatusData::ZThermalAdjust => {
                     let data: klipper::ZThermalAdjustStats =
+                        serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::FilamentMotionSensor(identifier)
+                | StatusData::FilamentSwitchSensor(identifier) => {
+                    name.replace(identifier);
+
+                    let data: klipper::FilamentRunoutSensorStats =
                         serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }

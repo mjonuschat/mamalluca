@@ -245,3 +245,25 @@ impl MetricsExporter for ZThermalAdjustStats {
         gauge!("klipper.stats.z_adjust.current_z_adjustment", &labels).set(self.current_z_adjust);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct FilamentRunoutSensorStats {
+    enabled: bool,
+    filament_detected: bool,
+}
+
+impl MetricsExporter for FilamentRunoutSensorStats {
+    fn export(&self, name: Option<&String>) {
+        let mut labels = Vec::new();
+        if let Some(name) = name {
+            labels.push(("name", name.to_owned()));
+        }
+        gauge!("klipper.stats.filament_runout_sensor.enabled", &labels)
+            .set(self.enabled as u64 as f64);
+        gauge!(
+            "klipper.stats.filament_runout_sensor.filament_detected",
+            &labels
+        )
+        .set(self.filament_detected as u64 as f64);
+    }
+}
