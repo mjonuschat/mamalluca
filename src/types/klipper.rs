@@ -164,3 +164,22 @@ impl MetricsExporter for TemperatureSensorStats {
         gauge!("klipper.stats.temperature.max", &labels).set(self.measured_max_temp);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct ControllerFanStats {
+    speed: f64,
+    #[serde(default)]
+    rpm: u64,
+}
+
+impl MetricsExporter for ControllerFanStats {
+    fn export(&self, name: Option<&String>) {
+        let mut labels = Vec::new();
+        if let Some(name) = name {
+            labels.push(("name", name.to_owned()));
+        }
+
+        gauge!("klipper.stats.controller_fan.speed", &labels).set(self.speed);
+        gauge!("klipper.stats.controller_fan.rpm", &labels).set(self.rpm as f64);
+    }
+}

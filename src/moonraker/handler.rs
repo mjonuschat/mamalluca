@@ -28,6 +28,7 @@ pub(crate) enum UpdateHandlerError {
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash)]
 enum StatusData {
+    ControllerFan(String),
     Extruder(String),
     HeaterBed(String),
     Mcu(String),
@@ -56,6 +57,7 @@ impl TryFrom<&str> for StatusData {
             ("temperature_sensor", Some(name)) => {
                 Ok(StatusData::TemperatureSensor(name.to_owned()))
             }
+            ("controller_fan", Some(name)) => Ok(StatusData::ControllerFan(name.to_owned())),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -89,6 +91,9 @@ impl From<StatusData> for String {
             }
             StatusData::TemperatureSensor(name) => {
                 format!("temperature_sensor {name}")
+            }
+            StatusData::ControllerFan(name) => {
+                format!("controller_fan {name}")
             }
         }
     }
@@ -167,6 +172,12 @@ impl UpdateHandler {
                 StatusData::TemperatureSensor(identifier) => {
                     name.replace(identifier);
                     let data: klipper::TemperatureSensorStats =
+                        serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::ControllerFan(identifier) => {
+                    name.replace(identifier);
+                    let data: klipper::ControllerFanStats =
                         serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
