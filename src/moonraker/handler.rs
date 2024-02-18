@@ -38,6 +38,7 @@ enum StatusData {
     HeaterFan(String),
     Mcu(String),
     MoonrakerStatus,
+    PauseResume,
     StepperEnable,
     TemperatureSensor(String),
     TMC2130(String),
@@ -88,6 +89,7 @@ impl TryFrom<&str> for StatusData {
             ("filament_switch_sensor", Some(name)) => {
                 Ok(StatusData::FilamentSwitchSensor(name.to_owned()))
             }
+            ("pause_resume", _) => Ok(StatusData::PauseResume),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -158,6 +160,7 @@ impl From<StatusData> for String {
             StatusData::FilamentMotionSensor(name) => {
                 format!("filament_motion_sensor {name}")
             }
+            StatusData::PauseResume => String::from("pause_resume"),
         }
     }
 }
@@ -277,6 +280,10 @@ impl UpdateHandler {
 
                     let data: klipper::FilamentRunoutSensorStats =
                         serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::PauseResume => {
+                    let data: klipper::PauseResumeStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };

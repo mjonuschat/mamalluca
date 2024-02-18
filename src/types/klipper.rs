@@ -267,3 +267,14 @@ impl MetricsExporter for FilamentRunoutSensorStats {
         .set(self.filament_detected as u64 as f64);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct PauseResumeStats {
+    is_paused: bool,
+}
+
+impl MetricsExporter for PauseResumeStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.pause_resume.paused").set(self.is_paused as u64 as f64);
+    }
+}
