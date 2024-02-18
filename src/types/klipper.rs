@@ -368,3 +368,18 @@ impl MetricsExporter for GCodeMoveStats {
         gauge!("klipper.stats.gcode.speed").set(self.speed);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct PrintStats {
+    filament_used: f64,
+    print_duration: f64,
+    total_duration: f64,
+}
+
+impl MetricsExporter for PrintStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.print_stats.filament_used").set(self.filament_used);
+        gauge!("klipper.stats.print_stats.print_duration").set(self.print_duration);
+        gauge!("klipper.stats.print_stats.total_duration").set(self.total_duration);
+    }
+}

@@ -42,6 +42,7 @@ enum StatusData {
     MoonrakerStatus,
     MotionReport,
     PauseResume,
+    PrintStats,
     Probe,
     StepperEnable,
     TemperatureSensor(String),
@@ -102,6 +103,7 @@ impl TryFrom<&str> for StatusData {
             ("exclude_object", _) => Ok(StatusData::ExcludeObject),
             ("toolhead", _) => Ok(StatusData::Toolhead),
             ("gcode_move", _) => Ok(StatusData::GCodeMove),
+            ("print_stats", _) => Ok(StatusData::PrintStats),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -179,6 +181,7 @@ impl From<StatusData> for String {
             StatusData::ExcludeObject => String::from("exclude_object"),
             StatusData::Toolhead => String::from("toolhead"),
             StatusData::GCodeMove => String::from("gcode_move"),
+            StatusData::PrintStats => String::from("print_stats"),
         }
     }
 }
@@ -327,6 +330,10 @@ impl UpdateHandler {
                 }
                 StatusData::GCodeMove => {
                     let data: klipper::GCodeMoveStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::PrintStats => {
+                    let data: klipper::PrintStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };
