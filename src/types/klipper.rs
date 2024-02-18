@@ -400,3 +400,18 @@ impl MetricsExporter for VirtualSdCardStats {
         gauge!("klipper.stats.virtual_sdcard.is_active").set(self.is_active as u64 as f64);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct SystemStats {
+    cputime: f64,
+    memavail: u64,
+    sysload: f64,
+}
+
+impl MetricsExporter for SystemStats {
+    fn export(&self, _name: Option<&String>) {
+        gauge!("klipper.stats.system.cpu_time").set(self.cputime);
+        gauge!("klipper.stats.system.mem_avail").set(self.memavail as f64);
+        gauge!("klipper.stats.system.sys_load").set(self.sysload);
+    }
+}
