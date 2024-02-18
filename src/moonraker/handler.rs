@@ -33,6 +33,7 @@ enum StatusData {
     Fan(String),
     FanGeneric(String),
     HeaterBed(String),
+    HeaterFan(String),
     Mcu(String),
     MoonrakerStatus,
     StepperEnable,
@@ -76,6 +77,7 @@ impl TryFrom<&str> for StatusData {
             ("stepper_enable", _) => Ok(StatusData::StepperEnable),
             ("fan", _) => Ok(StatusData::Fan(String::from("fan"))),
             ("fan_generic", Some(name)) => Ok(StatusData::FanGeneric(name.to_owned())),
+            ("heater_fan", Some(name)) => Ok(StatusData::HeaterFan(name.to_owned())),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -135,6 +137,9 @@ impl From<StatusData> for String {
             StatusData::Fan(_) => String::from("fan"),
             StatusData::FanGeneric(name) => {
                 format!("fan_generic {name}")
+            }
+            StatusData::HeaterFan(name) => {
+                format!("heater_fan {name}")
             }
         }
     }
@@ -237,7 +242,9 @@ impl UpdateHandler {
                         serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
-                StatusData::Fan(identifier) | StatusData::FanGeneric(identifier) => {
+                StatusData::Fan(identifier)
+                | StatusData::FanGeneric(identifier)
+                | StatusData::HeaterFan(identifier) => {
                     name.replace(identifier);
                     let data: klipper::GenericFanStats = serde_json::from_value(data.to_owned())?;
                     Box::new(data)
