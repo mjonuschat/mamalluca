@@ -26,3 +26,4 @@ json-patch = "1.2.0"
 metrics = "0.22.1"
 metrics-exporter-prometheus = "0.14"
 metrics-util = "0.16.2"
+openssl = { version = "0.10", features = ["vendored"] }
