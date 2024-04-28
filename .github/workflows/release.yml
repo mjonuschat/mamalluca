@@ -4,6 +4,7 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+-**'  # Pre-release versions
       - 'v[0-9]+.[0-9]+.[0-9]+'     # Release versions
+  workflow_dispatch:
 
 env:
   BIN_NAME: mamalluca
@@ -87,6 +88,7 @@ jobs:
           path: dist
 
   publish:
+    if: ${{ github.event_name == 'push' }}
     permissions:
       contents: write
     name: Publish
