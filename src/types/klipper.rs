@@ -169,7 +169,7 @@ impl MetricsExporter for TemperatureSensorStats {
 pub(crate) struct GenericFanStats {
     speed: f64,
     #[serde(default)]
-    rpm: u64,
+    rpm: f64,
 }
 
 impl MetricsExporter for GenericFanStats {
@@ -180,7 +180,7 @@ impl MetricsExporter for GenericFanStats {
         }
 
         gauge!("klipper.stats.fan.speed", &labels).set(self.speed);
-        gauge!("klipper.stats.fan.rpm", &labels).set(self.rpm as f64);
+        gauge!("klipper.stats.fan.rpm", &labels).set(self.rpm);
     }
 }
 
