@@ -415,3 +415,26 @@ impl MetricsExporter for SystemStats {
         gauge!("klipper.stats.system.sys_load").set(self.sysload);
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct TemperatureFanStats {
+    speed: f64,
+    #[serde(default)]
+    rpm: f64,
+    target: f64,
+    temperature: f64,
+}
+
+impl MetricsExporter for TemperatureFanStats {
+    fn export(&self, name: Option<&String>) {
+        let mut labels = Vec::new();
+        if let Some(name) = name {
+            labels.push(("name", name.to_owned()));
+        }
+
+        gauge!("klipper.stats.temperature_fan.speed", &labels).set(self.speed);
+        gauge!("klipper.stats.temperature_fan.rpm", &labels).set(self.rpm);
+        gauge!("klipper.stats.temperature_fan.target", &labels).set(self.target);
+        gauge!("klipper.stats.temperature_fan.temperature", &labels).set(self.temperature);
+    }
+}

@@ -46,6 +46,7 @@ enum StatusData {
     Probe,
     StepperEnable,
     SystemStats,
+    TemperatureFan(String),
     TemperatureSensor(String),
     TMC2130(String),
     TMC2208(String),
@@ -108,6 +109,7 @@ impl TryFrom<&str> for StatusData {
             ("print_stats", _) => Ok(StatusData::PrintStats),
             ("virtual_sdcard", _) => Ok(StatusData::VirtualSdCard),
             ("system_stats", _) => Ok(StatusData::SystemStats),
+            ("temperature_fan", Some(name)) => Ok(StatusData::TemperatureFan(name.to_owned())),
             _ => Err(UpdateHandlerError::UnknownStatusUpdate(value.to_owned())),
         }
     }
@@ -188,6 +190,9 @@ impl From<StatusData> for String {
             StatusData::PrintStats => String::from("print_stats"),
             StatusData::VirtualSdCard => String::from("virtual_sdcard"),
             StatusData::SystemStats => String::from("system_stats"),
+            StatusData::TemperatureFan(name) => {
+                format!("temperature_fan {name}")
+            }
         }
     }
 }
@@ -350,6 +355,13 @@ impl UpdateHandler {
                 }
                 StatusData::SystemStats => {
                     let data: klipper::SystemStats = serde_json::from_value(data.to_owned())?;
+                    Box::new(data)
+                }
+                StatusData::TemperatureFan(identifier) => {
+                    name.replace(identifier);
+
+                    let data: klipper::TemperatureFanStats =
+                        serde_json::from_value(data.to_owned())?;
                     Box::new(data)
                 }
             };
