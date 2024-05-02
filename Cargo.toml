@@ -1,7 +1,13 @@
 [package]
 name = "mamalluca"
+description = "A Prometheus exporter for Klipper/Moonraker metrics"
+readme = "README.md"
+repository = "https://github.com/mjonuschat/mamalluca"
+keywords = ["klipper", "moonraker", "prometheus", "exporter", "mamalluca", "instrumentation", "metrics"]
 version = "0.1.0"
 edition = "2021"
+license = "GPL-3.0-or-later"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
