@@ -24,6 +24,8 @@ pub(crate) enum UpdateHandlerError {
     MissingStatsField(String),
     #[error("Fatal Moonraker connection error")]
     FatalMoonrakerConnectionError,
+    #[error("HTTP Listener error")]
+    HttpListenerError(#[from] std::io::Error),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Hash)]
