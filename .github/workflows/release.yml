@@ -101,16 +101,6 @@ jobs:
 
       - run: ls -al mamalluca-*
 
-      - name: Calculate tag name
-        run: |
-          name=dev
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            name=${GITHUB_REF:10}
-          fi
-          echo "val={name}" >> $GITHUB_OUTPUT
-          echo TAG=$name >> $GITHUB_ENV
-        id: tagname
-
       - name: Build archive
         shell: bash
         run: |
@@ -145,7 +135,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: dist/*
           file_glob: true
-          tag: ${{ steps.tagname.outputs.val }}
+          tag: ${{ github.ref }}
           overwrite: true
 
       - name: Extract version
