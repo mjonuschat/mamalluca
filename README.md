@@ -8,7 +8,9 @@ Mamalluca does not need to run on the same host as Moonraker as long as it can e
 
 Mamalluca provides a Prometheus scrape target over HTTP on a configurable port.
 
+## Example Dashboard
 
+<img src="./assets/images/dashboard.png" width="800" alt="Example Dashboard">
 
 ## Installation
 
@@ -116,4 +118,3 @@ Contributions are always welcome! Take a look at the open [issues](https://githu
 ## License
 
 [GNU General Public License v3.0](https://choosealicense.com/licenses/gpl-3.0/)
-
