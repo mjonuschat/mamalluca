@@ -334,12 +334,13 @@ impl MetricsExporter for ExcludeObjectStats {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct ToolheadStats {
     max_accel: f64,
-    max_accel_to_decel: f64,
+    max_accel_to_decel: Option<f64>,
     max_velocity: f64,
     square_corner_velocity: f64,
     print_time: f64,
     estimated_print_time: f64,
     stalls: u64,
+    minimum_cruise_ratio: Option<f64>,
 }
 
 impl MetricsExporter for ToolheadStats {
@@ -349,8 +350,13 @@ impl MetricsExporter for ToolheadStats {
         gauge!("klipper.stats.toolhead.max_accel").set(self.max_accel);
         gauge!("klipper.stats.toolhead.max_velocity").set(self.max_velocity);
         gauge!("klipper.stats.toolhead.square_corner_velocity").set(self.square_corner_velocity);
-        gauge!("klipper.stats.toolhead.max_accel_to_decel").set(self.max_accel_to_decel);
         gauge!("klipper.stats.toolhead.stalls").set(self.stalls as f64);
+        if let Some(max_accel_to_decel) = self.max_accel_to_decel {
+            gauge!("klipper.stats.toolhead.max_accel_to_decel").set(max_accel_to_decel);
+        }
+        if let Some(minimum_cruise_ratio) = self.minimum_cruise_ratio {
+            gauge!("klipper.stats.toolhead.minimum_cruise_ratio").set(minimum_cruise_ratio);
+        }
     }
 }
 
