@@ -101,7 +101,7 @@ pub(crate) struct ExtruderStats {
     smooth_time: f64,
     target: f64,
     temperature: f64,
-    time_offset: f64,
+    time_offset: Option<f64>,
 }
 
 impl MetricsExporter for ExtruderStats {
@@ -121,7 +121,10 @@ impl MetricsExporter for ExtruderStats {
         gauge!("klipper.stats.extruder.smooth_tmime", &labels).set(self.smooth_time);
         gauge!("klipper.stats.extruder.target", &labels).set(self.target);
         gauge!("klipper.stats.extruder.temperature", &labels).set(self.temperature);
-        gauge!("klipper.stats.extruder.time_offset", &labels).set(self.time_offset);
+
+        if let Some(time_offset) = self.time_offset {
+            gauge!("klipper.stats.extruder.time_offset", &labels).set(time_offset);
+        }
     }
 }
 
