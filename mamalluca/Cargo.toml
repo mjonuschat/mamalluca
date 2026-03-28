@@ -17,7 +17,7 @@ inventory = "0.3"
 klipper-types = { path = "../klipper-types" }
 mamalluca-macros = { path = "../mamalluca-macros" }
 metrics = "0.22"
-metrics-exporter-prometheus = "0.14"
+metrics-exporter-prometheus = { version = "0.14", default-features = false, features = ["http-listener"] }
 metrics-util = "0.16"
 moonraker-client = { path = "../moonraker-client" }
 moonraker-types = { path = "../moonraker-types" }
