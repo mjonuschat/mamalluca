@@ -17,7 +17,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::task::JoinSet;
-use tracing::{error, Level};
+use tracing::{Level, error};
 
 mod moonraker;
 mod types;
@@ -90,8 +90,8 @@ impl Service<Request<IncomingBody>> for HttpExporterService {
     }
 }
 
-async fn run(args: &Cli) -> Result<()> {
-    let (handler, future) = UpdateHandler::new(&args.moonraker_url).await?;
+async fn run(args: Cli) -> Result<()> {
+    let (handler, future) = UpdateHandler::new(args.moonraker_url.clone()).await?;
     let handler = Arc::new(handler);
 
     let exporter = setup_exporter()?;
@@ -156,5 +156,5 @@ async fn main() -> Result<()> {
     let args = Cli::parse();
     setup_logging(args.verbose)?;
 
-    run(&args).await
+    run(args).await
 }

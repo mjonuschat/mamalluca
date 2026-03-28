@@ -24,20 +24,6 @@ impl JsonRPCRequest {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub(crate) struct JsonRPCError {
-    code: usize,
-    message: String,
-    data: Payload,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub(crate) struct JsonRPCResponse {
-    id: usize,
-    result: Option<Payload>,
-    error: Option<JsonRPCError>,
-}
-
 // #[derive(Clone, Debug, Deserialize, Serialize)]
 // pub(crate) struct ObjectList {
 //     objects: Vec<String>,

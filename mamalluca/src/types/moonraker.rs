@@ -1,5 +1,5 @@
 use crate::types::MetricsExporter;
-use metrics::{counter, describe_counter, gauge, Unit};
+use metrics::{Unit, counter, describe_counter, gauge};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

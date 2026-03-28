@@ -1,15 +1,15 @@
 use crate::moonraker::types::Payload;
 use crate::moonraker::{Client, MoonrakerCommands, MoonrakerStatusNotification};
 
-use crate::types::{klipper, moonraker, MetricsExporter};
+use crate::types::{MetricsExporter, klipper, moonraker};
 use anyhow::anyhow;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use thiserror::Error;
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{Mutex, mpsc, oneshot};
 use url::Url;
 
 #[derive(Error, Debug)]
@@ -210,21 +210,21 @@ pub struct UpdateHandler {
 
 impl UpdateHandler {
     pub async fn new(
-        url: &Url,
+        url: Url,
         // objects: Option<Vec<String>>,
     ) -> anyhow::Result<(
         Self,
         impl std::future::Future<Output = std::result::Result<(), ezsockets::Error>>,
     )> {
         let (tx, rx) = tokio::sync::mpsc::channel(100);
-        let (handle, future) = Client::connect(url.as_str(), tx.clone()).await?;
+        let (handle, future) = Client::connect(url.to_string(), tx.clone()).await?;
 
         Ok((
             Self {
                 initialized: AtomicBool::new(false),
                 updates: Mutex::new(rx),
                 connection: Arc::new(handle),
-                url: url.to_owned(),
+                url,
                 current_status: DashMap::new(),
             },
             future,

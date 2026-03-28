@@ -1,7 +1,7 @@
 use crate::types::MetricsExporter;
-use metrics::{counter, describe_counter, gauge, Unit};
+use metrics::{Unit, counter, describe_counter, gauge};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -85,13 +85,6 @@ pub(crate) struct WebhooksStats {
 }
 
 impl MetricsExporter for WebhooksStats {}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub(crate) struct HeaterInformation {
-    available_heaters: HashSet<String>,
-    available_sensors: HashSet<String>,
-    available_monitors: HashSet<String>,
-}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct ExtruderStats {

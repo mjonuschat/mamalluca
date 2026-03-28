@@ -1,5 +1,5 @@
-use crate::moonraker::types::JsonRPCRequest;
 use crate::moonraker::Payload;
+use crate::moonraker::types::JsonRPCRequest;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
@@ -59,25 +59,24 @@ impl Client {
     }
 
     pub async fn connect(
-        url: &str,
+        url: String,
         updates: mpsc::Sender<MoonrakerStatusNotification>,
     ) -> anyhow::Result<(
         ezsockets::Client<Client>,
         impl Future<Output = Result<(), ezsockets::Error>>,
     )> {
-        let url = Url::parse(url)?;
+        let url = Url::parse(&url)?;
         let config = ClientConfig::new(url);
         Ok(ezsockets::connect(|handle| Client::new(handle, updates), config).await)
     }
 
     async fn process_call_response(&self, response: serde_json::Value) {
         let conn_id = response.get("id").and_then(|v| v.as_u64());
-        if let Some(conn_id) = conn_id {
-            if let Some((_, tx)) = self.state.requests.remove(&conn_id) {
-                if let Err(msg) = tx.send(response) {
-                    eprintln!("Error returning response for {}: {:?}", conn_id, msg)
-                }
-            }
+        if let Some(conn_id) = conn_id
+            && let Some((_, tx)) = self.state.requests.remove(&conn_id)
+            && let Err(msg) = tx.send(response)
+        {
+            eprintln!("Error returning response for {}: {:?}", conn_id, msg)
         }
     }
 
@@ -111,10 +110,10 @@ impl Client {
                 }
             };
 
-            if let Some(notification) = notification {
-                if let Err(err) = self.updates.send(notification).await {
-                    eprintln!("Error sending notification to update handler: {}", err)
-                }
+            if let Some(notification) = notification
+                && let Err(err) = self.updates.send(notification).await
+            {
+                eprintln!("Error sending notification to update handler: {}", err)
             }
         }
     }
