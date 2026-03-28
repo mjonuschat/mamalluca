@@ -1,48 +1,26 @@
-use crate::moonraker::UpdateHandlerError;
-use anyhow::Result;
-use bytes::Bytes;
-use clap::{ArgAction, ColorChoice, Parser};
-use http_body_util::Full;
-use hyper::body::Incoming as IncomingBody;
-use hyper::server::conn::http1;
-use hyper::service::Service;
-use hyper::{Request, Response};
-use hyper_util::rt::TokioIo;
-use metrics_exporter_prometheus::{PrometheusBuilder, PrometheusHandle};
-use moonraker::UpdateHandler;
-use std::future::Future;
-use std::net::SocketAddr;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::net::TcpListener;
-use tokio::task::JoinSet;
-use tracing::{Level, error};
+//! Mamalluca -- Prometheus exporter for Klipper/Moonraker metrics.
+//!
+//! Connects to a Moonraker instance via WebSocket, subscribes to printer
+//! status updates, and serves them as Prometheus metrics over HTTP.
 
-// TODO: Remove allow(unused) once collectors are wired in (Task 15).
-#[allow(unused)]
+mod config;
 mod metrics;
-mod moonraker;
-// TODO: Remove allow(unused) once wired into run() in Task 15.
-#[allow(unused)]
 mod server;
-mod types;
 
-/// Prometheus exporter for Moonraker.
-#[derive(clap::Parser, Debug)]
-#[clap(author, about, version, name = "mamalluca", color=ColorChoice::Auto)]
-pub(crate) struct Cli {
-    /// Verbose mode (-v, -vv, -vvv, etc.)
-    #[clap(short, long, action=ArgAction::Count)]
-    verbose: u8,
-    /// Moonraker URL
-    #[clap(short, long, default_value = "ws://127.0.0.1:7125/websocket")]
-    moonraker_url: url::Url,
-    /// Prometheus Listener Socket
-    #[clap(short, long, default_value = "0.0.0.0:9000")]
-    prometheus_listen_address: SocketAddr,
-}
+use anyhow::Result;
+use clap::Parser;
+use config::Cli;
+use metrics::registry::CollectorRegistry;
+use moonraker_client::{MoonrakerClient, MoonrakerConfig, MoonrakerEvent};
+use server::AppState;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use tokio_util::sync::CancellationToken;
+use tracing::Level;
 
+/// Set up the tracing subscriber with the verbosity level from CLI flags.
+///
+/// Maps `-v` count to log level: 0 = WARN, 1 = INFO, 2 = DEBUG, 3+ = TRACE.
 fn setup_logging(verbose: u8) -> Result<()> {
     let log_level = match verbose {
         0 => Level::WARN,
@@ -50,110 +28,7 @@ fn setup_logging(verbose: u8) -> Result<()> {
         2 => Level::DEBUG,
         _ => Level::TRACE,
     };
-
-    // Logging
     tracing_subscriber::fmt().with_max_level(log_level).init();
-
-    Ok(())
-}
-
-fn setup_exporter() -> Result<HttpExporterService> {
-    let builder = PrometheusBuilder::new();
-    let handle = builder.install_recorder()?;
-
-    Ok(HttpExporterService::new(handle))
-}
-
-#[derive(Clone)]
-struct HttpExporterService {
-    handle: PrometheusHandle,
-}
-
-impl HttpExporterService {
-    pub fn new(handle: PrometheusHandle) -> Self {
-        Self { handle }
-    }
-}
-
-impl Service<Request<IncomingBody>> for HttpExporterService {
-    type Response = Response<Full<Bytes>>;
-    type Error = hyper::Error;
-    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
-
-    fn call(&self, req: Request<IncomingBody>) -> Self::Future {
-        fn mk_response(s: String) -> Result<Response<Full<Bytes>>, hyper::Error> {
-            Ok(Response::builder().body(Full::new(Bytes::from(s))).unwrap())
-        }
-
-        let handle = self.handle.clone();
-
-        let res = match req.uri().path() {
-            "/health" => mk_response("OK".into()),
-            _ => mk_response(handle.render()),
-        };
-
-        Box::pin(async { res })
-    }
-}
-
-async fn run(args: Cli) -> Result<()> {
-    let (handler, future) = UpdateHandler::new(args.moonraker_url.clone()).await?;
-    let handler = Arc::new(handler);
-
-    let exporter = setup_exporter()?;
-    let listener = TcpListener::bind(&args.prometheus_listen_address).await?;
-
-    let mut set = JoinSet::new();
-
-    // Start the HTTP server
-    set.spawn({
-        async move {
-            loop {
-                let (stream, _) = listener.accept().await?;
-                let io = TokioIo::new(stream);
-                let service = exporter.clone();
-
-                tokio::task::spawn(async move {
-                    if let Err(err) = http1::Builder::new()
-                        .keep_alive(false)
-                        .serve_connection(io, service)
-                        .await
-                    {
-                        error!("Failed to serve HTTP connection: {:?}", err)
-                    }
-                });
-            }
-        }
-    });
-
-    // Start the update handler
-    set.spawn({
-        let handler = handler.clone();
-        async move { handler.process().await }
-    });
-
-    // Start the periodic metrics update
-    set.spawn({
-        let mut interval = tokio::time::interval(Duration::from_secs(1));
-        async move {
-            loop {
-                interval.tick().await;
-                handler.export().await?;
-            }
-        }
-    });
-
-    set.spawn(async move {
-        future
-            .await
-            .map_err(|_e| UpdateHandlerError::FatalMoonrakerConnectionError)
-    });
-
-    // Wait for the first task to exit
-    if let Some(result) = set.join_next().await {
-        result??
-    }
-
     Ok(())
 }
 
@@ -162,5 +37,152 @@ async fn main() -> Result<()> {
     let args = Cli::parse();
     setup_logging(args.verbose)?;
 
-    run(args).await
+    let cancel = CancellationToken::new();
+
+    // Signal handler for graceful shutdown (SIGTERM + SIGINT).
+    // Spawned as a background task so the main logic can proceed.
+    let shutdown_token = cancel.clone();
+    tokio::spawn(async move {
+        let ctrl_c = tokio::signal::ctrl_c();
+
+        // On Unix, also handle SIGTERM for systemd / container compatibility.
+        #[cfg(unix)]
+        {
+            let mut sigterm =
+                tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                    .expect("Failed to register SIGTERM handler");
+            tokio::select! {
+                _ = ctrl_c => {},
+                _ = sigterm.recv() => {},
+            }
+        }
+        #[cfg(not(unix))]
+        {
+            ctrl_c.await.ok();
+        }
+
+        tracing::info!("Received shutdown signal");
+        shutdown_token.cancel();
+    });
+
+    // Install the Prometheus metrics recorder globally.
+    // The returned handle lets us render the text exposition format on demand.
+    let metrics_handle =
+        metrics_exporter_prometheus::PrometheusBuilder::new().install_recorder()?;
+
+    // Build the collector registry from all `#[collector]`-annotated types.
+    let registry = Arc::new(CollectorRegistry::from_inventory());
+
+    // Shared flag so the /health endpoint can report connection status.
+    let connection_status = Arc::new(AtomicBool::new(false));
+
+    // Connect to Moonraker (spawns a background reconnect loop).
+    let config = MoonrakerConfig {
+        url: args.moonraker_url.clone(),
+        ..MoonrakerConfig::default()
+    };
+    let (client, mut events) = MoonrakerClient::connect(config, cancel.clone()).await?;
+
+    // Build the axum HTTP server.
+    let state = AppState {
+        metrics_handle,
+        connection_status: connection_status.clone(),
+    };
+    let app = server::app(state);
+    let listener = tokio::net::TcpListener::bind(&args.prometheus_listen_address).await?;
+    tracing::info!(
+        address = %args.prometheus_listen_address,
+        "HTTP server listening"
+    );
+
+    // Run HTTP server and event processor concurrently until shutdown.
+    // Clone cancel before `cancelled_owned()` consumes it.
+    let event_cancel = cancel.clone();
+    tokio::select! {
+        result = axum::serve(listener, app)
+            .with_graceful_shutdown(cancel.cancelled_owned()) => {
+            if let Err(e) = result {
+                tracing::error!(error = %e, "HTTP server error");
+            }
+        }
+        _ = process_events(
+            &mut events,
+            &client,
+            &registry,
+            &connection_status,
+            event_cancel,
+        ) => {}
+    }
+
+    client.close().await;
+    Ok(())
+}
+
+/// Process Moonraker events and dispatch status updates to collectors.
+///
+/// Runs until the cancellation token fires or the event channel closes.
+/// On connect, queries available printer objects and subscribes to all of them.
+async fn process_events(
+    events: &mut tokio::sync::mpsc::Receiver<MoonrakerEvent>,
+    client: &MoonrakerClient,
+    registry: &CollectorRegistry,
+    connection_status: &AtomicBool,
+    cancel: CancellationToken,
+) {
+    loop {
+        tokio::select! {
+            _ = cancel.cancelled() => break,
+            event = events.recv() => {
+                let Some(event) = event else { break };
+                match event {
+                    MoonrakerEvent::Connected => {
+                        tracing::info!("Connected to Moonraker");
+                        connection_status.store(true, Ordering::Relaxed);
+
+                        // Discover available printer objects and subscribe.
+                        match client.get_object_list().await {
+                            Ok(objects) => {
+                                if let Err(e) =
+                                    client.subscribe(&objects).await
+                                {
+                                    tracing::error!(
+                                        error = %e,
+                                        "Failed to subscribe"
+                                    );
+                                }
+                            }
+                            Err(e) => {
+                                tracing::error!(
+                                    error = %e,
+                                    "Failed to get object list"
+                                );
+                            }
+                        }
+                    }
+                    MoonrakerEvent::Disconnected { reason } => {
+                        tracing::warn!(
+                            ?reason,
+                            "Disconnected from Moonraker"
+                        );
+                        connection_status.store(false, Ordering::Relaxed);
+                    }
+                    MoonrakerEvent::StatusUpdate { key, data } => {
+                        if let Err(e) = registry.dispatch(&key, &data) {
+                            tracing::debug!(
+                                key,
+                                error = %e,
+                                "Failed to process status update"
+                            );
+                        }
+                    }
+                    MoonrakerEvent::KlippyStateChanged(state) => {
+                        tracing::info!(
+                            ?state,
+                            "Klippy state changed"
+                        );
+                    }
+                }
+            }
+        }
+    }
 }
