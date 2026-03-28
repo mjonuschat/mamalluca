@@ -7,6 +7,7 @@ mod config;
 mod metrics;
 mod server;
 
+use ::metrics::gauge;
 use anyhow::Result;
 use clap::Parser;
 use config::Cli;
@@ -183,6 +184,9 @@ async fn process_events(
                             );
                         }
                     }
+                    MoonrakerEvent::SensorUpdate { sensor, values } => {
+                        record_sensor_values(&sensor, &values);
+                    }
                     MoonrakerEvent::KlippyStateChanged(state) => {
                         tracing::info!(
                             ?state,
@@ -191,6 +195,32 @@ async fn process_events(
                     }
                 }
             }
+        }
+    }
+}
+
+/// Record values from a Moonraker sensor update as Prometheus gauges.
+///
+/// Moonraker sensors are user-defined (e.g. MQTT power monitors) with
+/// arbitrary field names. Numeric and boolean values are exported as gauges;
+/// other types (strings, nulls, objects) are silently skipped.
+///
+/// Produces metrics like:
+/// `moonraker.stats.sensor{sensor="hank-pm",field="power"} 3.8`
+fn record_sensor_values(sensor: &str, values: &serde_json::Value) {
+    let Some(map) = values.as_object() else {
+        return;
+    };
+    for (field, value) in map {
+        // Coerce to f64: numbers directly, booleans as 0/1, skip everything else.
+        let numeric = match value {
+            serde_json::Value::Number(n) => n.as_f64(),
+            serde_json::Value::Bool(b) => Some(if *b { 1.0 } else { 0.0 }),
+            _ => None,
+        };
+        if let Some(v) = numeric {
+            let labels = vec![("sensor", sensor.to_owned()), ("field", field.to_owned())];
+            gauge!("moonraker.stats.sensor", &labels).set(v);
         }
     }
 }

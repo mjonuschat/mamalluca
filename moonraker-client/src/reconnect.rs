@@ -512,8 +512,24 @@ async fn handle_notification(
                 })
                 .await;
         }
+        "notify_sensor_update" => {
+            // User-defined Moonraker sensors (e.g. MQTT power monitors).
+            // Params structure: `[{"sensor_id": {"field": value, ...}, ...}]`
+            if let Some(sensors) = params.as_array().and_then(|arr| arr.first())
+                && let Some(map) = sensors.as_object()
+            {
+                for (sensor, values) in map {
+                    let _ = events
+                        .send(MoonrakerEvent::SensorUpdate {
+                            sensor: sensor.clone(),
+                            values: values.clone(),
+                        })
+                        .await;
+                }
+            }
+        }
         _ => {
-            debug!(method, "Unknown notification method, skipping");
+            debug!(method, payload = %params, "Unknown notification method, skipping");
         }
     }
 }

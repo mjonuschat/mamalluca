@@ -145,6 +145,19 @@ pub enum MoonrakerEvent {
         /// The JSON payload containing updated fields.
         data: serde_json::Value,
     },
+
+    /// A Moonraker sensor update was received (`notify_sensor_update`).
+    ///
+    /// Moonraker sensors are user-defined in `moonraker.conf` (e.g. MQTT
+    /// power monitors). Each sensor reports a flat map of named values.
+    /// Values may be numeric, boolean, or string — consumers should handle
+    /// all types gracefully.
+    SensorUpdate {
+        /// The sensor ID (e.g. `"hank-pm"`).
+        sensor: String,
+        /// The sensor's current values as a JSON object.
+        values: serde_json::Value,
+    },
 }
 
 /// The reason a WebSocket disconnect occurred.
