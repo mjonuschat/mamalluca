@@ -59,7 +59,8 @@ commit_parsers = [
     { message = "^style", group = "<!-- 5 -->🎨 Styling" },
     { message = "^test", group = "<!-- 6 -->🧪 Testing" },
     { message = "^chore\\(release\\)", skip = true },
-    { message = "^chore|^ci", group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
+    { message = "^ci", skip = true },
+    { message = "^chore", group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
     { message = "^build", group = "<!-- 8 -->🏗️ Build" },
     { message = "^revert", group = "<!-- 9 -->◀️ Revert" },
 ]
