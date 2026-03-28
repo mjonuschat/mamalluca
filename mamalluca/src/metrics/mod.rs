@@ -40,23 +40,29 @@ pub trait MetricCollector: Send + Sync + 'static {
 /// Wrapper for `inventory` collection.
 ///
 /// `inventory` requires a concrete `Collect` type. This wraps a
-/// [`MetricCollector`] trait object for registration.
+/// `'static` reference to a [`MetricCollector`] trait object for registration.
+///
+/// Using a static reference (rather than `Box`) keeps `new` as a `const fn`,
+/// which is required because `inventory::submit!` runs in a static context.
+/// All collector structs are zero-sized unit structs, so the static instance
+/// costs no memory.
 pub struct CollectorEntry {
-    /// The wrapped collector trait object.
-    collector: Box<dyn MetricCollector>,
+    /// A static reference to the wrapped collector.
+    collector: &'static dyn MetricCollector,
 }
 
 impl CollectorEntry {
-    /// Create a new entry wrapping a collector.
-    pub fn new<T: MetricCollector>(collector: T) -> Self {
-        Self {
-            collector: Box::new(collector),
-        }
+    /// Create a new entry wrapping a static collector reference.
+    ///
+    /// This is `const` so it can be called inside `inventory::submit!`, which
+    /// expands to a static initializer.
+    pub const fn new(collector: &'static dyn MetricCollector) -> Self {
+        Self { collector }
     }
 
     /// Get a reference to the wrapped collector.
     pub fn collector(&self) -> &dyn MetricCollector {
-        &*self.collector
+        self.collector
     }
 }
 

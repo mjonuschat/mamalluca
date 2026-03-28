@@ -16,7 +16,7 @@
 //! ```
 
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{DeriveInput, LitStr, parse_macro_input};
 
 /// Marks a struct as a metric collector and registers it with the global registry.
@@ -83,6 +83,11 @@ pub fn collector(attr: TokenStream, item: TokenStream) -> TokenStream {
             .into();
     };
 
+    // Build a unique hidden module name from the struct name to avoid
+    // collisions when multiple collectors live in the same parent module.
+    // e.g. `TemperatureSensorCollector` -> `_collector_registration_TemperatureSensorCollector`
+    let register_mod = format_ident!("_collector_registration_{}", struct_name);
+
     // Generate the struct definition (passthrough), associated constants, and
     // inventory registration. The `::inventory::submit!` macro and
     // `crate::metrics::CollectorEntry` resolve in the *calling* crate's scope,
@@ -103,8 +108,20 @@ pub fn collector(attr: TokenStream, item: TokenStream) -> TokenStream {
         // Auto-register this collector with the global registry at program startup.
         // `inventory` uses platform-specific linker tricks to collect all submissions
         // without requiring a central registration function.
-        ::inventory::submit! {
-            crate::metrics::CollectorEntry::new(#struct_name)
+        //
+        // `inventory::submit!` runs in a static context, so `CollectorEntry::new`
+        // must be `const fn`. We store a reference to a static instance of the
+        // unit-struct collector (zero-sized, zero-cost) inside a private inner
+        // module whose name is derived from the struct to guarantee uniqueness
+        // even when multiple collectors are defined in the same parent module.
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        mod #register_mod {
+            use super::#struct_name;
+            static INSTANCE: #struct_name = #struct_name;
+            ::inventory::submit! {
+                crate::metrics::CollectorEntry::new(&INSTANCE)
+            }
         }
     };
 

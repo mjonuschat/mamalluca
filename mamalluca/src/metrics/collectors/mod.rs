@@ -4,6 +4,11 @@
 //! or Moonraker status objects. Collectors self-register via the
 //! `#[collector]` macro and `inventory` crate.
 
+pub mod extruder;
+pub mod heater_bed;
+pub mod mcu;
+pub mod temperature;
+
 /// Build a Prometheus label vector with an optional instance name.
 ///
 /// Named collectors (e.g. multiple extruders) pass the instance name as a label.
