@@ -7,10 +7,6 @@
 //! **No protocol logic or reconnection** lives here — those concerns belong
 //! in higher-level modules (`jsonrpc` and the future reconnect module).
 
-// This module is `pub(crate)` and will be consumed by the reconnect module
-// (Task 8). Until then, the compiler sees these items as unused.
-#![allow(dead_code)]
-
 use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::{SinkExt, StreamExt};
 use tokio::net::TcpStream;
