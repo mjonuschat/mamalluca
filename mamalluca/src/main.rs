@@ -23,6 +23,9 @@ use tracing::{Level, error};
 #[allow(unused)]
 mod metrics;
 mod moonraker;
+// TODO: Remove allow(unused) once wired into run() in Task 15.
+#[allow(unused)]
+mod server;
 mod types;
 
 /// Prometheus exporter for Moonraker.
