@@ -1,3 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["mamalluca"]
+members = [
+    "klipper-types",
+    "moonraker-types",
+    "moonraker-client",
+    "mamalluca-macros",
+    "mamalluca",
+]
