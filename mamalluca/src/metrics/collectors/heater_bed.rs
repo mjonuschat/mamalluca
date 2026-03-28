@@ -47,3 +47,47 @@ impl MetricCollector for HeaterBedCollector {
         Ok(())
     }
 }
+
+/// Collects generic heater statistics (e.g. enclosure or chamber heaters).
+///
+/// Named instances correspond to heaters declared in `printer.cfg`, e.g.
+/// `[heater_generic heater_chamber]` produces the key `"heater_generic heater_chamber"`.
+///
+/// Source: `klippy/extras/heaters.py`
+#[collector(prefix = "heater_generic", named)]
+pub struct HeaterGenericCollector;
+
+impl MetricCollector for HeaterGenericCollector {
+    fn key_prefix(&self) -> &str {
+        Self::KEY_PREFIX
+    }
+
+    fn is_named(&self) -> bool {
+        Self::IS_NAMED
+    }
+
+    /// Deserialize and record generic heater statistics.
+    ///
+    /// # Arguments
+    /// * `_key` - The full status key (unused; prefix matching already happened)
+    /// * `name` - Heater instance name (e.g. `"heater_chamber"`)
+    /// * `data` - Raw JSON value from the status update
+    ///
+    /// # Errors
+    /// Returns an error if deserialization fails.
+    fn record(
+        &self,
+        _key: &str,
+        name: Option<&str>,
+        data: &serde_json::Value,
+    ) -> anyhow::Result<()> {
+        let stats: klipper_types::HeaterBedStats = serde_json::from_value(data.clone())?;
+        let labels = labels_for(name);
+
+        gauge!("klipper.stats.heater_generic.power", &labels).set(stats.power);
+        gauge!("klipper.stats.heater_generic.target", &labels).set(stats.target);
+        gauge!("klipper.stats.heater_generic.temperature", &labels).set(stats.temperature);
+
+        Ok(())
+    }
+}

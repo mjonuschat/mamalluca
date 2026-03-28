@@ -56,6 +56,105 @@ impl MetricCollector for TemperatureSensorCollector {
     }
 }
 
+/// Collects host machine temperature sensor readings (e.g. Raspberry Pi CPU temperature).
+///
+/// Named instances correspond to sensors declared in `printer.cfg`, e.g.
+/// `[temperature_host Raspberry_Pi]` produces the key `"temperature_host Raspberry_Pi"`.
+///
+/// Source: `klippy/extras/temperature_host.py`
+#[collector(prefix = "temperature_host", named)]
+pub struct TemperatureHostCollector;
+
+impl MetricCollector for TemperatureHostCollector {
+    fn key_prefix(&self) -> &str {
+        Self::KEY_PREFIX
+    }
+
+    fn is_named(&self) -> bool {
+        Self::IS_NAMED
+    }
+
+    /// Deserialize and record host temperature sensor statistics.
+    ///
+    /// # Arguments
+    /// * `_key` - The full status key (unused; prefix matching already happened)
+    /// * `name` - Sensor instance name (e.g. `"Raspberry_Pi"`)
+    /// * `data` - Raw JSON value from the status update
+    ///
+    /// # Errors
+    /// Returns an error if deserialization fails.
+    fn record(
+        &self,
+        _key: &str,
+        name: Option<&str>,
+        data: &serde_json::Value,
+    ) -> anyhow::Result<()> {
+        let stats: klipper_types::TemperatureSensorStats = serde_json::from_value(data.clone())?;
+        let labels = labels_for(name);
+
+        gauge!("klipper.stats.temperature_host.temperature", &labels).set(stats.temperature);
+        gauge!("klipper.stats.temperature_host.measured_min_temp", &labels)
+            .set(stats.measured_min_temp);
+        gauge!("klipper.stats.temperature_host.measured_max_temp", &labels)
+            .set(stats.measured_max_temp);
+
+        Ok(())
+    }
+}
+
+/// Collects combined temperature sensor readings.
+///
+/// Named instances correspond to sensors declared in `printer.cfg`, e.g.
+/// `[temperature_combined heater_chamber]` produces the key
+/// `"temperature_combined heater_chamber"`.
+///
+/// Source: `klippy/extras/temperature_combined.py`
+#[collector(prefix = "temperature_combined", named)]
+pub struct TemperatureCombinedCollector;
+
+impl MetricCollector for TemperatureCombinedCollector {
+    fn key_prefix(&self) -> &str {
+        Self::KEY_PREFIX
+    }
+
+    fn is_named(&self) -> bool {
+        Self::IS_NAMED
+    }
+
+    /// Deserialize and record combined temperature sensor statistics.
+    ///
+    /// # Arguments
+    /// * `_key` - The full status key (unused; prefix matching already happened)
+    /// * `name` - Sensor instance name (e.g. `"heater_chamber"`)
+    /// * `data` - Raw JSON value from the status update
+    ///
+    /// # Errors
+    /// Returns an error if deserialization fails.
+    fn record(
+        &self,
+        _key: &str,
+        name: Option<&str>,
+        data: &serde_json::Value,
+    ) -> anyhow::Result<()> {
+        let stats: klipper_types::TemperatureSensorStats = serde_json::from_value(data.clone())?;
+        let labels = labels_for(name);
+
+        gauge!("klipper.stats.temperature_combined.temperature", &labels).set(stats.temperature);
+        gauge!(
+            "klipper.stats.temperature_combined.measured_min_temp",
+            &labels
+        )
+        .set(stats.measured_min_temp);
+        gauge!(
+            "klipper.stats.temperature_combined.measured_max_temp",
+            &labels
+        )
+        .set(stats.measured_max_temp);
+
+        Ok(())
+    }
+}
+
 /// Collects temperature-controlled fan statistics.
 ///
 /// Named instances correspond to fans declared in `printer.cfg`, e.g.
