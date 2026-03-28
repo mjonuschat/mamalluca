@@ -3,4 +3,5 @@
 //! Provides automatic reconnection with exponential backoff,
 //! subscription management, and channel-based event delivery.
 
+pub(crate) mod connection;
 pub mod jsonrpc;
