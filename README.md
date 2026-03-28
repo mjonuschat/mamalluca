@@ -8,13 +8,18 @@ Mamalluca does not need to run on the same host as Moonraker as long as it can e
 
 Mamalluca provides a Prometheus scrape target over HTTP on a configurable port.
 
+### Endpoints
+
+- `/` and `/metrics` — Prometheus text format metrics
+- `/health` — JSON health check with Moonraker connection status (200 OK / 503 Service Unavailable)
+
 ## Example Dashboard
 
 <img src="./assets/images/dashboard.png" width="800" alt="Example Dashboard">
 
 ## Installation
 
-Download the latest version for your platform from [GitHub Releases](github.com/mjonuschat/mamalluca/releases/latest). Precompiled binaries are provides for the following operating systems and CPU architectures:
+Download the latest version for your platform from [GitHub Releases](https://github.com/mjonuschat/mamalluca/releases/latest). Precompiled binaries are provided for the following operating systems and CPU architectures:
 
 - aarch64-linux
 - x86_64-linux
@@ -35,7 +40,7 @@ mv mamalluca-aarch64-linux mamalluca
 ### Verify connectivity
 
 The following command will start the exporter and try to connect to the Moonraker instance on the local host.
-If the command is successfull you should start seeing messages about status updates being processed.
+If the command is successful you should start seeing messages about status updates being processed.
 
 ```bash
 ./mamalluca -vv
@@ -43,19 +48,18 @@ If the command is successfull you should start seeing messages about status upda
 
 **Example output**
 ```text
-2024-04-30T02:11:44.149790Z  INFO ezsockets::client: connecting to ws://127.0.0.1:7125/websocket...
-2024-04-30T02:11:44.149915Z  INFO ezsockets::client: connecting attempt no: 1...
-2024-04-30T02:11:49.403001Z DEBUG tungstenite::handshake::client: Client handshake done.
-2024-04-30T02:11:49.403278Z  INFO ezsockets::client: successfully connected
-2024-04-30T02:11:49.403567Z  INFO ezsockets::client: connected to ws://127.0.0.1:7125/websocket
-2024-04-30T02:11:49.403832Z  INFO mamalluca::moonraker::handler: Connected to Moonraker url="ws://127.0.0.1:7125/websocket"
-2024-04-30T02:11:49.573639Z DEBUG mamalluca::moonraker::handler: Processing status update key="controller_fan controller_fan"
+2026-03-28T17:49:33.442030Z  INFO mamalluca::metrics::registry: Built collector registry singletons=14 named=19
+2026-03-28T17:49:33.442462Z  INFO moonraker_client::reconnect: Connecting to Moonraker url=ws://127.0.0.1:7125/websocket
+2026-03-28T17:49:33.442729Z  INFO mamalluca: HTTP server listening address=0.0.0.0:9000
+2026-03-28T17:49:33.452611Z DEBUG tungstenite::handshake::client: Client handshake done.
+2026-03-28T17:49:33.452675Z  INFO moonraker_client::reconnect: Connected to Moonraker
+2026-03-28T17:49:33.452688Z  INFO mamalluca: Connected to Moonraker
 ...
 ```
 
 **Checking metrics exporter**
 
-By default the metrics exporter listens on all interfaces of the computer on port `9000`. Assuming your printer is reachable with the name `printer.local` you can open [http://printer.local:9000/](http://printer.local:9000/) and see the metrics that are being exported so far.
+By default the metrics exporter listens on all interfaces of the computer on port `9000`. Assuming your printer is reachable with the name `printer.local` you can open [http://printer.local:9000/metrics](http://printer.local:9000/metrics) to see the exported metrics, or [http://printer.local:9000/health](http://printer.local:9000/health) to check the connection status.
 
 ### Running the exporter in the background
 
@@ -105,6 +109,32 @@ systemctl status mamalluca
      Active: active (running) since Wed 2024-05-01 19:10:07 PDT; 1s ago
      ...
 ```
+### Docker
+
+A Dockerfile is provided for containerized deployments:
+
+```bash
+docker build -t mamalluca .
+docker run -p 9000:9000 mamalluca -m ws://your-printer:7125/websocket
+```
+
+Or with docker-compose alongside Prometheus and Grafana:
+
+```yaml
+services:
+  mamalluca:
+    build: .
+    ports:
+      - "9000:9000"
+    command: ["-m", "ws://moonraker:7125/websocket"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+```
+
 ## Contributing
 
 Contributions are always welcome! Take a look at the open [issues](https://github.com/mjonuschat/mamalluca/issues) for ideas of where to get started or open a pull request with your bugfix/feature/enhancement.
@@ -117,4 +147,6 @@ Contributions are always welcome! Take a look at the open [issues](https://githu
 
 ## License
 
-[GNU General Public License v3.0](https://choosealicense.com/licenses/gpl-3.0/)
+The mamalluca binary is licensed under the [GNU General Public License v3.0](https://choosealicense.com/licenses/gpl-3.0/).
+
+The library crates (`klipper-types`, `moonraker-types`, `moonraker-client`, `mamalluca-macros`) are dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE).
