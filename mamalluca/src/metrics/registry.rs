@@ -42,6 +42,20 @@ impl CollectorRegistry {
         Self { singletons, named }
     }
 
+    /// Check if a status key has a matching collector.
+    ///
+    /// Used to filter subscriptions to only objects we can handle.
+    ///
+    /// # Arguments
+    /// * `key` - The full status key (e.g. `"toolhead"` or `"tmc2209 stepper_x"`)
+    pub fn has_collector(&self, key: &str) -> bool {
+        if self.singletons.contains_key(key) {
+            return true;
+        }
+        let prefix = key.split_once(' ').map(|(p, _)| p).unwrap_or(key);
+        self.named.iter().any(|c| c.key_prefix() == prefix)
+    }
+
     /// Dispatch a status update to the matching collector.
     ///
     /// Returns `Ok(true)` if a collector handled it, `Ok(false)` if no

@@ -139,12 +139,20 @@ async fn process_events(
                         tracing::info!("Connected to Moonraker");
                         connection_status.store(true, Ordering::Relaxed);
 
-                        // Discover available printer objects and subscribe.
+                        // Discover available printer objects and subscribe only
+                        // to those with a registered collector to avoid wasting
+                        // bandwidth on updates we would discard anyway.
                         match client.get_object_list().await {
                             Ok(objects) => {
-                                if let Err(e) =
-                                    client.subscribe(&objects).await
-                                {
+                                let subscribe_objects: Vec<String> = objects
+                                    .into_iter()
+                                    .filter(|obj| registry.has_collector(obj))
+                                    .collect();
+                                tracing::info!(
+                                    count = subscribe_objects.len(),
+                                    "Subscribing to status objects"
+                                );
+                                if let Err(e) = client.subscribe(&subscribe_objects).await {
                                     tracing::error!(
                                         error = %e,
                                         "Failed to subscribe"
