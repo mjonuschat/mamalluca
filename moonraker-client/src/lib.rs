@@ -2,3 +2,5 @@
 //!
 //! Provides automatic reconnection with exponential backoff,
 //! subscription management, and channel-based event delivery.
+
+pub mod jsonrpc;
