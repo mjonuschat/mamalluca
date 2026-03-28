@@ -74,7 +74,7 @@ impl CollectorRegistry {
             }
         }
 
-        tracing::debug!(key, "No collector registered for status key");
+        tracing::trace!(key, "No collector registered for status key");
         Ok(false)
     }
 }
