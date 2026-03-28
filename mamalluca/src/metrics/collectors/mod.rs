@@ -5,9 +5,12 @@
 //! `#[collector]` macro and `inventory` crate.
 
 pub mod extruder;
+pub mod fan;
 pub mod heater_bed;
 pub mod mcu;
+pub mod stepper;
 pub mod temperature;
+pub mod toolhead;
 
 /// Build a Prometheus label vector with an optional instance name.
 ///
