@@ -902,6 +902,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "inventory"
+version = "0.3.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8062b737e5389949f477d4760a2ebbff0c366f97798f2419b8d8f366363d3342"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "io-uring"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1035,11 +1044,15 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-util",
+ "inventory",
  "json-patch 1.4.0",
+ "klipper-types",
+ "mamalluca-macros",
  "maplit",
  "metrics",
  "metrics-exporter-prometheus",
  "metrics-util",
+ "moonraker-types",
  "openssl",
  "serde",
  "serde_json",

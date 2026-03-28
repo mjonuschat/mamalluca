@@ -19,6 +19,9 @@ use tokio::net::TcpListener;
 use tokio::task::JoinSet;
 use tracing::{Level, error};
 
+// TODO: Remove allow(unused) once collectors are wired in (Task 15).
+#[allow(unused)]
+mod metrics;
 mod moonraker;
 mod types;
 

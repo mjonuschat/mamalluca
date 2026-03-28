@@ -16,7 +16,11 @@ anyhow = "1.0.75"
 clap = { version = "4.3.23", features = ["derive"] }
 clap-verbosity-flag = "2.0.1"
 ezsockets = "0.6.2"
+inventory = "0.3"
+klipper-types = { path = "../klipper-types" }
+mamalluca-macros = { path = "../mamalluca-macros" }
 maplit = "1.0.2"
+moonraker-types = { path = "../moonraker-types" }
 serde = { version = "1.0.185", features = ["derive"] }
 serde_json = "1.0.105"
 thiserror = "1.0.47"
