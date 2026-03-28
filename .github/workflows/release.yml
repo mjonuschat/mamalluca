@@ -73,6 +73,7 @@ jobs:
         shell: bash
         run: |
           mkdir dist
+          cp LICENSE README.md dist/
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
             cp "target/${{ matrix.target }}/release/$BIN_NAME.exe" "dist/"
           else
@@ -130,6 +131,7 @@ jobs:
               pkgname=$PROJECT_NAME-$TAG-$platform
               mkdir tmp/$pkgname
               mv mamalluca-$platform/$BIN_NAME$exe tmp/$pkgname
+              cp mamalluca-$platform/LICENSE mamalluca-$platform/README.md tmp/$pkgname/ 2>/dev/null || true
               chmod +x tmp/$pkgname/$BIN_NAME$exe
 
               if [ "$exe" = "" ]; then
