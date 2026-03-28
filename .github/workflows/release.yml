@@ -24,49 +24,50 @@ jobs:
         - build: x86_64-linux
           os: ubuntu-22.04
           target: x86_64-unknown-linux-gnu
-          cross: false
         - build: aarch64-linux
           os: ubuntu-22.04
           target: aarch64-unknown-linux-gnu
-          cross: true
         - build: x86_64-macos
           os: macos-latest
           target: x86_64-apple-darwin
-          cross: false
         - build: aarch64-macos
           os: macos-latest
           target: aarch64-apple-darwin
         - build: x86_64-windows
           os: windows-2019
           target: x86_64-pc-windows-msvc
-          cross: false
 
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          submodules: true
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools
+        if: matrix.build == 'aarch64-linux'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Cache cargo & target directories
         uses: Swatinem/rust-cache@v2
 
       - name: Run cargo test
-        if: matrix.build != 'aarch64-macos'
-        uses: houseabsolute/actions-rust-cross@v0
-        with:
-          command: test
-          target: ${{ matrix.target }}
-          toolchain: stable
-          args: "--locked --release"
+        if: matrix.build != 'aarch64-linux' && matrix.build != 'aarch64-macos'
+        run: cargo test --workspace --locked
 
       - name: Build release binary
-        uses: houseabsolute/actions-rust-cross@v0
-        with:
-          command: build
-          target: ${{ matrix.target }}
-          toolchain: stable
-          args: "--locked --release"
-          strip: true
+        run: cargo build --target ${{ matrix.target }} --release --locked -p mamalluca
+
+      - name: Strip binary
+        if: matrix.build != 'x86_64-windows'
+        run: |
+          STRIP_CMD="strip"
+          if [ "${{ matrix.build }}" = "aarch64-linux" ]; then
+            STRIP_CMD="aarch64-linux-gnu-strip"
+          fi
+          $STRIP_CMD "target/${{ matrix.target }}/release/mamalluca"
 
       - name: Package as archive
         shell: bash
