@@ -96,11 +96,21 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          submodules: false
+          fetch-depth: 0
 
       - uses: actions/download-artifact@v4
 
       - run: ls -al mamalluca-*
+
+      - name: Generate release notes
+        id: changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: CHANGES.md
+          GITHUB_REPO: ${{ github.repository }}
 
       - name: Build archive
         shell: bash
@@ -119,7 +129,6 @@ jobs:
               fi
               pkgname=$PROJECT_NAME-$TAG-$platform
               mkdir tmp/$pkgname
-              # cp LICENSE README.md tmp/$pkgname
               mv mamalluca-$platform/$BIN_NAME$exe tmp/$pkgname
               chmod +x tmp/$pkgname/$BIN_NAME$exe
 
@@ -138,8 +147,4 @@ jobs:
           file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
-
-      - name: Extract version
-        id: extract-version
-        run: |
-          printf "%s=%s\n" tag-name "${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          body: ${{ steps.changelog.outputs.content }}
