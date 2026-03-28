@@ -4,11 +4,16 @@
 //! or Moonraker status objects. Collectors self-register via the
 //! `#[collector]` macro and `inventory` crate.
 
+pub mod bed;
 pub mod extruder;
 pub mod fan;
 pub mod heater_bed;
 pub mod mcu;
+pub mod moonraker;
+pub mod print;
+pub mod sensor;
 pub mod stepper;
+pub mod system;
 pub mod temperature;
 pub mod toolhead;
 
