@@ -100,8 +100,10 @@ jobs:
           fetch-depth: 0
 
       - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
 
-      - run: ls -al mamalluca-*
+      - run: ls -al artifacts/
 
       - name: Generate release notes
         id: changelog
@@ -122,16 +124,16 @@ jobs:
           mkdir tmp
           mkdir dist
 
-          for dir in mamalluca-* ; do
-              platform=${dir#"mamalluca-"}
+          for dir in artifacts/mamalluca-* ; do
+              platform=${dir#"artifacts/mamalluca-"}
               unset exe
               if [[ $platform =~ "windows" ]]; then
                   exe=".exe"
               fi
               pkgname=$PROJECT_NAME-$TAG-$platform
               mkdir tmp/$pkgname
-              mv mamalluca-$platform/$BIN_NAME$exe tmp/$pkgname
-              cp mamalluca-$platform/LICENSE mamalluca-$platform/README.md tmp/$pkgname/ 2>/dev/null || true
+              mv "$dir/$BIN_NAME$exe" tmp/$pkgname
+              cp "$dir/LICENSE" "$dir/README.md" tmp/$pkgname/ 2>/dev/null || true
               chmod +x tmp/$pkgname/$BIN_NAME$exe
 
               if [ "$exe" = "" ]; then
