@@ -10,7 +10,7 @@ env:
   BIN_NAME: mamalluca
   PROJECT_NAME: mamalluca
   REPO_NAME: mjonuschat/mamalluca
-  BREW_TAP: jondot/homebrew-tap
+  TAG: ${{ github.ref_name }}
 
 jobs:
   dist:
