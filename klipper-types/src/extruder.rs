@@ -6,6 +6,32 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct ExtruderControlStats {
+    #[serde(default)]
+    pub power: f64,
+
+    #[serde(default)]
+    pub loss_ambient: f64,
+
+    #[serde(default)]
+    pub loss_filament: f64,
+
+    #[serde(default)]
+    pub temp_ambient: f64,
+
+    #[serde(default)]
+    pub temp_block: f64,
+
+    #[serde(default)]
+    pub temp_sensor: f64,
+
+    #[serde(default)]
+    pub filament_density: f64,
+
+    #[serde(default)]
+    pub filament_heat_capacity: f64,
+}
 /// Status for a single extruder (hotend).
 ///
 /// Klipper supports multiple named extruders (e.g. `extruder`, `extruder1`).
@@ -39,6 +65,9 @@ pub struct ExtruderStats {
     /// Time offset for temperature readings. May be absent in stock Klipper.
     #[serde(default)]
     pub time_offset: Option<f64>,
+
+    #[serde(default)]
+    pub control_stats: Option<ExtruderControlStats>,
 
     /// Captures unknown keys from newer Klipper/Kalico firmware versions.
     #[serde(flatten)]

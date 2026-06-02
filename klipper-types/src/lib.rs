@@ -20,6 +20,7 @@ pub mod system;
 pub mod temperature;
 pub mod toolhead;
 pub mod webhooks;
+pub mod load_cell_probe;
 
 // Re-export primary types at crate root for convenience.
 pub use bed::{ProbeStats, ZTiltStats};
@@ -36,3 +37,4 @@ pub use system::SystemStats;
 pub use temperature::TemperatureSensorStats;
 pub use toolhead::{GCodeMoveStats, MotionReportStats, ToolheadStats};
 pub use webhooks::{KlippyState, WebhooksStats};
+pub use load_cell_probe::LoadCellProbeStats;

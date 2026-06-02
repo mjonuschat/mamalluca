@@ -16,6 +16,7 @@ pub mod stepper;
 pub mod system;
 pub mod temperature;
 pub mod toolhead;
+pub mod load_cell_probe;
 
 /// Build a Prometheus label vector with an optional instance name.
 ///
