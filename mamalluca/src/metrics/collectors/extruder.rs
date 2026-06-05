@@ -50,12 +50,11 @@ impl MetricCollector for ExtruderCollector {
 
         // MPC for Kalico
         if let Some(control_stats) = stats.control_stats {
-            // let control_stats = stats.control_stats.unwrap();
             gauge!("klipper.stats.extruder.control_stats.filament_density", &labels).set(control_stats.filament_density);
             gauge!("klipper.stats.extruder.control_stats.filament_heat_capacity", &labels).set(control_stats.filament_heat_capacity);
             gauge!("klipper.stats.extruder.control_stats.loss_ambient", &labels).set(control_stats.loss_ambient);
             gauge!("klipper.stats.extruder.control_stats.loss_filament", &labels).set(control_stats.loss_filament);
-            gauge!("klipper.stats.extruder.control_stats.power", &labels).set(control_stats.loss_filament);
+            gauge!("klipper.stats.extruder.control_stats.power", &labels).set(control_stats.power);
             gauge!("klipper.stats.extruder.control_stats.temp_ambient", &labels).set(control_stats.temp_ambient);
             gauge!("klipper.stats.extruder.control_stats.temp_block", &labels).set(control_stats.temp_block);
             gauge!("klipper.stats.extruder.control_stats.temp_sensor", &labels).set(control_stats.temp_sensor);
