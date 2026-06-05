@@ -8,6 +8,7 @@ pub mod bed;
 pub mod extruder;
 pub mod fan;
 pub mod heater_bed;
+pub mod load_cell_probe;
 pub mod mcu;
 pub mod moonraker;
 pub mod print;
@@ -16,7 +17,6 @@ pub mod stepper;
 pub mod system;
 pub mod temperature;
 pub mod toolhead;
-pub mod load_cell_probe;
 
 /// Build a Prometheus label vector with an optional instance name.
 ///

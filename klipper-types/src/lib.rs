@@ -12,6 +12,7 @@ pub mod bed;
 pub mod extruder;
 pub mod fan;
 pub mod heater_bed;
+pub mod load_cell_probe;
 pub mod mcu;
 pub mod print;
 pub mod sensor;
@@ -20,13 +21,13 @@ pub mod system;
 pub mod temperature;
 pub mod toolhead;
 pub mod webhooks;
-pub mod load_cell_probe;
 
 // Re-export primary types at crate root for convenience.
 pub use bed::{ProbeStats, ZTiltStats};
 pub use extruder::ExtruderStats;
 pub use fan::{GenericFanStats, TemperatureFanStats};
 pub use heater_bed::HeaterBedStats;
+pub use load_cell_probe::LoadCellProbeStats;
 pub use mcu::McuStats;
 pub use print::{
     ExcludeObjectStats, PauseResumeStats, PrintJobInfo, PrintStats, VirtualSdCardStats,
@@ -37,4 +38,3 @@ pub use system::SystemStats;
 pub use temperature::TemperatureSensorStats;
 pub use toolhead::{GCodeMoveStats, MotionReportStats, ToolheadStats};
 pub use webhooks::{KlippyState, WebhooksStats};
-pub use load_cell_probe::LoadCellProbeStats;
