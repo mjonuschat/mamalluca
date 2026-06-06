@@ -12,6 +12,7 @@ pub mod bed;
 pub mod extruder;
 pub mod fan;
 pub mod heater_bed;
+pub mod load_cell_probe;
 pub mod mcu;
 pub mod print;
 pub mod sensor;
@@ -26,6 +27,7 @@ pub use bed::{ProbeStats, ZTiltStats};
 pub use extruder::ExtruderStats;
 pub use fan::{GenericFanStats, TemperatureFanStats};
 pub use heater_bed::HeaterBedStats;
+pub use load_cell_probe::LoadCellProbeStats;
 pub use mcu::McuStats;
 pub use print::{
     ExcludeObjectStats, PauseResumeStats, PrintJobInfo, PrintStats, VirtualSdCardStats,

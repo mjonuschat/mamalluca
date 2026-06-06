@@ -8,6 +8,7 @@ pub mod bed;
 pub mod extruder;
 pub mod fan;
 pub mod heater_bed;
+pub mod load_cell_probe;
 pub mod mcu;
 pub mod moonraker;
 pub mod print;
