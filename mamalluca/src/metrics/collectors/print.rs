@@ -45,9 +45,16 @@ impl MetricCollector for PrintStatsCollector {
         gauge!("klipper.stats.print_stats.filament_used", &labels).set(stats.filament_used);
         gauge!("klipper.stats.print_stats.print_duration", &labels).set(stats.print_duration);
         gauge!("klipper.stats.print_stats.total_duration", &labels).set(stats.total_duration);
-        gauge!("klipper.stats.print_stats.current_layer", &labels)
-            .set(stats.info.current_layer as f64);
-        gauge!("klipper.stats.print_stats.total_layer", &labels).set(stats.info.total_layer as f64);
+        gauge_if_some!(
+            "klipper.stats.print_stats.current_layer",
+            &labels,
+            stats.info.current_layer.map(|layer| layer as f64)
+        );
+        gauge_if_some!(
+            "klipper.stats.print_stats.total_layer",
+            &labels,
+            stats.info.total_layer.map(|layer| layer as f64)
+        );
 
         Ok(())
     }

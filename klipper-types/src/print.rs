@@ -14,13 +14,14 @@ use std::collections::HashMap;
 /// Source: `klippy/extras/print_stats.py`
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct PrintJobInfo {
-    /// Zero-indexed current layer number.
+    /// Zero-indexed current layer number. Absent until slicer layer metadata is available.
     #[serde(default)]
-    pub current_layer: u64,
+    pub current_layer: Option<u64>,
 
     /// Total number of layers in the print, as parsed from slicer metadata.
+    /// Absent until slicer layer metadata is available.
     #[serde(default)]
-    pub total_layer: u64,
+    pub total_layer: Option<u64>,
 
     /// Captures unknown keys from newer Klipper/Kalico firmware versions.
     #[serde(flatten)]
@@ -129,8 +130,8 @@ mod tests {
         let stats: PrintStats =
             serde_json::from_value(json).expect("should deserialize full payload");
         assert!((stats.filament_used - 1234.56).abs() < f64::EPSILON);
-        assert_eq!(stats.info.current_layer, 42);
-        assert_eq!(stats.info.total_layer, 200);
+        assert_eq!(stats.info.current_layer, Some(42));
+        assert_eq!(stats.info.total_layer, Some(200));
         assert!(stats.extra.is_empty());
     }
 
