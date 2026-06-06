@@ -9,4 +9,4 @@ publish = false
 tag-name = "v{{version}}"
 tag-message = "v{{version}}"
 pre-release-commit-message = "chore(release): Prepare v{{version}}"
-consolidate-commits = true
+consolidate-commits = false
