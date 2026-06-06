@@ -4,28 +4,28 @@ use std::collections::HashMap;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct LoadCellProbeStats {
     #[serde(default)]
-    pub force_g: f64,
+    pub force_g: Option<f64>,
 
     #[serde(default)]
-    pub min_force_g: f64,
+    pub min_force_g: Option<f64>,
 
     #[serde(default)]
-    pub max_force_g: f64,
+    pub max_force_g: Option<f64>,
 
     #[serde(default)]
     pub is_calibrated: bool,
 
     #[serde(default)]
-    pub counts_per_gram: f64,
+    pub counts_per_gram: Option<f64>,
 
     #[serde(default)]
-    pub reference_tare_counts: f64,
+    pub reference_tare_counts: Option<f64>,
 
     #[serde(default)]
-    pub tare_counts: f64,
+    pub tare_counts: Option<f64>,
 
     #[serde(default)]
-    pub tare_force: f64,
+    pub tare_force: Option<f64>,
 
     #[serde(default)]
     pub last_trigger_time: f64,
