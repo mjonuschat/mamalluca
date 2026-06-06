@@ -26,11 +26,20 @@ pub struct ExtruderControlStats {
     #[serde(default)]
     pub temp_sensor: f64,
 
+    /// Kalico reports the filament temperature source as a descriptor, not a
+    /// direct numeric temperature reading.
+    #[serde(default)]
+    pub filament_temp: Option<serde_json::Value>,
+
     #[serde(default)]
     pub filament_density: f64,
 
     #[serde(default)]
     pub filament_heat_capacity: f64,
+
+    /// Captures unknown keys from newer Klipper/Kalico firmware versions.
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 /// Status for a single extruder (hotend).
 ///
