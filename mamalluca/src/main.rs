@@ -6,6 +6,7 @@
 mod config;
 mod metrics;
 mod server;
+mod status_cache;
 
 use ::metrics::gauge;
 use anyhow::Result;
@@ -14,6 +15,7 @@ use config::Cli;
 use metrics::registry::CollectorRegistry;
 use moonraker_client::{MoonrakerClient, MoonrakerConfig, MoonrakerEvent};
 use server::AppState;
+use status_cache::StatusCache;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio_util::sync::CancellationToken;
@@ -130,6 +132,8 @@ async fn process_events(
     connection_status: &AtomicBool,
     cancel: CancellationToken,
 ) {
+    let mut status_cache = StatusCache::new();
+
     loop {
         tokio::select! {
             _ = cancel.cancelled() => break,
@@ -153,11 +157,32 @@ async fn process_events(
                                     count = subscribe_objects.len(),
                                     "Subscribing to status objects"
                                 );
-                                if let Err(e) = client.subscribe(&subscribe_objects).await {
-                                    tracing::error!(
-                                        error = %e,
-                                        "Failed to subscribe"
-                                    );
+                                match client.subscribe(&subscribe_objects).await {
+                                    Ok(response) => {
+                                        if let Some(seeded_objects) =
+                                            status_cache.seed_from_subscribe_response(&response)
+                                        {
+                                            for (key, data) in seeded_objects {
+                                                if let Err(e) = registry.dispatch(&key, &data) {
+                                                    tracing::debug!(
+                                                        key,
+                                                        error = %e,
+                                                        "Failed to process initial status snapshot"
+                                                    );
+                                                }
+                                            }
+                                        } else {
+                                            tracing::debug!(
+                                                "Subscribe response did not contain a status snapshot"
+                                            );
+                                        }
+                                    }
+                                    Err(e) => {
+                                        tracing::error!(
+                                            error = %e,
+                                            "Failed to subscribe"
+                                        );
+                                    }
                                 }
                             }
                             Err(e) => {
@@ -176,7 +201,8 @@ async fn process_events(
                         connection_status.store(false, Ordering::Relaxed);
                     }
                     MoonrakerEvent::StatusUpdate { key, data } => {
-                        if let Err(e) = registry.dispatch(&key, &data) {
+                        let cached_data = status_cache.update(&key, data);
+                        if let Err(e) = registry.dispatch(&key, cached_data) {
                             tracing::debug!(
                                 key,
                                 error = %e,
