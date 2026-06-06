@@ -19,10 +19,10 @@ pub struct GenericFanStats {
     #[serde(default)]
     pub speed: f64,
 
-    /// Tachometer reading in revolutions per minute. Zero when no tach sensor
-    /// is wired or the fan is stopped.
+    /// Tachometer reading in revolutions per minute. Absent when no tach
+    /// sensor is wired.
     #[serde(default)]
-    pub rpm: f64,
+    pub rpm: Option<f64>,
 
     /// Captures unknown keys from newer Klipper/Kalico firmware versions.
     #[serde(flatten)]
@@ -41,9 +41,10 @@ pub struct TemperatureFanStats {
     #[serde(default)]
     pub speed: f64,
 
-    /// Tachometer reading in revolutions per minute.
+    /// Tachometer reading in revolutions per minute. Absent when no tach
+    /// sensor is wired.
     #[serde(default)]
-    pub rpm: f64,
+    pub rpm: Option<f64>,
 
     /// Target temperature in degrees Celsius that the fan tries to maintain.
     #[serde(default)]
@@ -71,7 +72,7 @@ mod tests {
         let stats: GenericFanStats =
             serde_json::from_value(json).expect("should deserialize full payload");
         assert!((stats.speed - 0.75).abs() < f64::EPSILON);
-        assert!((stats.rpm - 4200.0).abs() < f64::EPSILON);
+        assert_eq!(stats.rpm, Some(4200.0));
         assert!(stats.extra.is_empty());
     }
 
@@ -99,6 +100,7 @@ mod tests {
             serde_json::from_value(json).expect("should deserialize full payload");
         assert!((stats.target - 45.0).abs() < f64::EPSILON);
         assert!((stats.temperature - 43.2).abs() < f64::EPSILON);
+        assert_eq!(stats.rpm, Some(3000.0));
         assert!(stats.extra.is_empty());
     }
 

@@ -21,7 +21,7 @@ fn record_generic_fan_stats(name: Option<&str>, data: &serde_json::Value) -> any
     let labels = labels_for(name);
 
     gauge!("klipper.stats.fan.speed", &labels).set(stats.speed);
-    gauge!("klipper.stats.fan.rpm", &labels).set(stats.rpm);
+    gauge_if_some!("klipper.stats.fan.rpm", &labels, stats.rpm);
 
     Ok(())
 }

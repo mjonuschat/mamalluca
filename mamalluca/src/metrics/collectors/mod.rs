@@ -4,6 +4,14 @@
 //! or Moonraker status objects. Collectors self-register via the
 //! `#[collector]` macro and `inventory` crate.
 
+macro_rules! gauge_if_some {
+    ($metric:literal, $labels:expr, $value:expr) => {
+        if let Some(value) = $value {
+            metrics::gauge!($metric, $labels).set(value);
+        }
+    };
+}
+
 pub mod bed;
 pub mod extruder;
 pub mod fan;

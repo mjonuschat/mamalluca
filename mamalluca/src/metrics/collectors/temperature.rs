@@ -190,7 +190,7 @@ impl MetricCollector for TemperatureFanCollector {
         let labels = labels_for(name);
 
         gauge!("klipper.stats.temperature_fan.speed", &labels).set(stats.speed);
-        gauge!("klipper.stats.temperature_fan.rpm", &labels).set(stats.rpm);
+        gauge_if_some!("klipper.stats.temperature_fan.rpm", &labels, stats.rpm);
         gauge!("klipper.stats.temperature_fan.target", &labels).set(stats.target);
         gauge!("klipper.stats.temperature_fan.temperature", &labels).set(stats.temperature);
 
