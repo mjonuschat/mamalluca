@@ -130,16 +130,16 @@ jobs:
               if [[ $platform =~ "windows" ]]; then
                   exe=".exe"
               fi
-              pkgname=$PROJECT_NAME-$TAG-$platform
-              mkdir tmp/$pkgname
-              mv "$dir/$BIN_NAME$exe" tmp/$pkgname
-              cp "$dir/LICENSE" "$dir/README.md" tmp/$pkgname/ 2>/dev/null || true
-              chmod +x tmp/$pkgname/$BIN_NAME$exe
+              pkgname="${PROJECT_NAME}-${TAG}-${platform}"
+              mkdir "tmp/$pkgname"
+              mv "$dir/$BIN_NAME$exe" "tmp/$pkgname"
+              cp "$dir/LICENSE" "$dir/README.md" "tmp/$pkgname/" 2>/dev/null || true
+              chmod +x "tmp/$pkgname/$BIN_NAME$exe"
 
               if [ "$exe" = "" ]; then
-                  tar cJf dist/$pkgname.tar.xz -C tmp $pkgname
+                  tar cJf "dist/$pkgname.tar.xz" -C tmp "$pkgname"
               else
-                  (cd tmp && 7z a -r ../dist/$pkgname.zip $pkgname)
+                  (cd tmp && 7z a -r "../dist/$pkgname.zip" "$pkgname")
               fi
           done
 
